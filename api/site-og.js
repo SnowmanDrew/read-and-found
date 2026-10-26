@@ -8,7 +8,7 @@ export default async function handler(req,res) {
   const card = h('div',{style:{
     width:1200,height:630,display:'flex',flexDirection:'column',justifyContent:'space-between',
     backgroundColor:'#1c304c',color:'#f5f6f4',padding:'63px 75px',
-    borderBottom:'19px solid #e4b857',fontFamily:'serif'
+    borderBottom:'19px solid #e4b857'
   }},
     h('div',{style:{fontSize:42,fontWeight:700,letterSpacing:-1}},'read&found'),
     h('div',{style:{display:'flex',flexDirection:'column',gap:24}},
@@ -26,7 +26,7 @@ export default async function handler(req,res) {
     res.setHeader('Cache-Control','public, max-age=86400, s-maxage=86400');
     return res.status(200).end(Buffer.from(await image.arrayBuffer()));
   } catch(error) {
-    console.error('Homepage OG image failed:',error.name||'error');
+    console.error('Homepage OG image failed:',error?.message||error?.name||'error');
     return res.status(503).end('Image unavailable');
   }
 }

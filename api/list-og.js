@@ -27,7 +27,7 @@ export default async function handler(req,res) {
     images[i]?h('img',{src:images[i],width:134,height:214,style:{objectFit:'contain'}}):
       h('span',{style:{fontSize:19,fontWeight:700,color:'#1c304c',lineHeight:1.2}},b.title)));
   const component=h('div',{style:{width:'1200px',height:'630px',display:'flex',background:'#1c304c',
-     color:'#f5f6f4',padding:'54px 62px',fontFamily:'Georgia',alignItems:'center',justifyContent:'space-between'}},
+     color:'#f5f6f4',padding:'54px 62px',alignItems:'center',justifyContent:'space-between'}},
    h('div',{style:{display:'flex',flexDirection:'column',width:'560px',height:'100%',justifyContent:'space-between'}},
       h('div',{style:{fontSize:34,fontWeight:700}},'read&found'),
       h('div',{style:{display:'flex',flexDirection:'column',gap:17}},
@@ -40,7 +40,7 @@ export default async function handler(req,res) {
   res.statusCode=200;res.setHeader('Content-Type','image/png');res.setHeader('Cache-Control','public,max-age=120,s-maxage=120');
   return res.end(Buffer.from(await image.arrayBuffer()));
  }catch(error){
-  console.error('Share image unavailable:',error.name||'error');
+  console.error('Share image unavailable:',error?.message||error?.name||'error');
   return res.status(503).end('Image unavailable');
  }
 }
