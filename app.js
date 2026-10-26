@@ -80,7 +80,8 @@
     // Swapping a recommendation does not trigger it again.
     if (state.stage === 'results' && !stages.results.classList.contains('stamp-revealed')) {
       requestAnimationFrame(() => stages.results.classList.add('stamp-revealed'));
-    } document.body.style.overflow = '';
+    }
+    document.body.style.overflow = '';
   }
   function showError(message, onRetry) {
     stopLoadingTicker(); state.busy = false; retryAction = onRetry;

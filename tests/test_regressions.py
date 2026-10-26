@@ -60,7 +60,7 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('bookshopUrl',js)
 
     def test_editorial_round_30(self):
-        self.assertIn('editorial-v30.css?v=30',html)
+        self.assertIn('editorial-v30.css?v=31',html)
         self.assertIn('id="loadingKicker"',html)
         self.assertIn('Question 1 of 3',html)
         self.assertIn('portraitStartingPoint',html)
