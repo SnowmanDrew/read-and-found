@@ -194,6 +194,45 @@
     return '/api/out?' + params.toString();
   }
 
+  function detailsForBook(book) {
+    return [book.year ? 'first published ' + book.year : '',
+      book.pages ? 'about ' + book.pages + ' pages' : '',
+      book.series || ''].filter(Boolean).join(' · ');
+  }
+
+  function makeBorrowPanel(book) {
+    const panel = document.createElement('details'); panel.className = 'borrow-panel';
+    const summary = document.createElement('summary'); summary.textContent = 'borrow or listen';
+    const content = document.createElement('div'); content.className = 'borrow-panel-content';
+    const text = document.createElement('p');
+    text.textContent = 'Search for ' + book.title + ' by ' + book.author + ' with your library card.';
+    const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'borrow-copy';
+    copy.textContent = 'copy title & author';
+    copy.addEventListener('click', () => {
+      if (!navigator.clipboard?.writeText) return toast('Copying is unavailable in this browser.');
+      navigator.clipboard.writeText(book.title + ' — ' + book.author)
+        .then(() => toast('Book details copied.'), () => toast('Copying is unavailable.'));
+    });
+    const links = document.createElement('div'); links.className = 'borrow-service-links';
+    const services = [
+      ['find a local library', 'https://www.gov.uk/local-library-services'],
+      ['Libby (ebooks and audiobooks)', 'https://libbyapp.com/'],
+      ['BorrowBox (ebooks and audiobooks)', 'https://www.borrowbox.com/'],
+      ['WorldCat catalogue', 'https://search.worldcat.org/search?' +
+        new URLSearchParams({q: book.isbn13 ? 'bn:' + book.isbn13 : book.title + ' ' + book.author})]
+    ];
+    services.forEach(([label,url],i) => {
+      const a = document.createElement('a'); a.href = url; a.textContent = label;
+      a.target = '_blank'; a.rel = 'noopener noreferrer';
+      if (i === 3) a.dataset.worldcat = 'true';
+      links.append(a);
+    });
+    const caveat = document.createElement('p'); caveat.className = 'borrow-caveat';
+    caveat.textContent = 'Availability depends on your library. GOV.UK covers England and Wales.';
+    content.append(text,copy,links,caveat); panel.append(summary,content);
+    return panel;
+  }
+
   function createBookRow(book,index) {
     const row = document.createElement('article');
     row.className = 'book-row';
@@ -207,7 +246,13 @@
     if (roleBadge) { roleBadge.className = 'book-match-badge'; roleBadge.textContent = roleLabels[book.role]; }
     const title = document.createElement('h3'); title.className = 'book-title'; title.textContent = book.title;
     const author = document.createElement('p'); author.className = 'book-author'; author.textContent = `by ${book.author}`;
+    const detail = document.createElement('p'); detail.className = 'book-detail';
+    detail.textContent = detailsForBook(book); detail.hidden = !detail.textContent;
     const reason = document.createElement('p'); reason.className = 'book-reason'; reason.textContent = book.reason;
+    const note = document.createElement('details'); note.className = 'book-content-note'; note.hidden = !book.contentNote;
+    const noteTitle = document.createElement('summary'); noteTitle.textContent = 'content note';
+    const noteBody = document.createElement('p'); noteBody.textContent = book.contentNote || '';
+    note.append(noteTitle,noteBody);
     const source = book.source?.url ? sourceLink(book.source) : sourceLink({title:'Open Library',url:'https://openlibrary.org/search?q='+encodeURIComponent(book.title+' '+book.author)});
     if (source) {
       source.className = 'book-source';
@@ -241,7 +286,7 @@
     feedback.append(readButton,choices);
     info.append(kicker);
     if (roleBadge) info.append(roleBadge);
-    info.append(title,author,reason);
+    info.append(title,author,detail,reason,note);
     const links = document.createElement('div'); links.className = 'book-links';
     if (source) links.append(source);
     const buy = document.createElement('a'); buy.className = 'book-buy'; buy.target = '_blank';
@@ -251,6 +296,7 @@
     const shopArrow = document.createElement('i'); shopArrow.dataset.lucide = 'arrow-up-right'; shopArrow.setAttribute('aria-hidden','true');
     buy.append(shopIcon,document.createTextNode(' Find a copy at Bookshop.org '),shopArrow);
     links.append(buy); info.append(links);
+    info.append(makeBorrowPanel(book));
     info.append(feedback);
     row.append(number,coverFor(book,index),info);
     return row;
@@ -280,6 +326,16 @@
     if (!item || !/^https:\/\/covers\.openlibrary\.org\/b\/id\/\d+-L\.jpg\?default=false$/.test(item.coverUrl)) return;
     if (version !== coverLookupVersion || state.stage !== 'results' ||
         state.books[index]?.title !== book.title || state.books[index]?.author !== book.author) return;
+    if (item.year) state.books[index].year = item.year;
+    if (item.pages) state.books[index].pages = item.pages;
+    if (item.series) state.books[index].series = item.series;
+    if (item.isbn13) state.books[index].isbn13 = item.isbn13;
+    const row = $('booksList').querySelector('[data-book-index="' + index + '"]');
+    const bookDetail = row?.querySelector('.book-detail');
+    if (bookDetail) { bookDetail.textContent = detailsForBook(state.books[index]); bookDetail.hidden = !bookDetail.textContent; }
+    const worldcat = row?.querySelector('[data-worldcat]');
+    if (worldcat && state.books[index].isbn13)
+      worldcat.href = 'https://search.worldcat.org/search?' + new URLSearchParams({q:'bn:' + state.books[index].isbn13});
     const cover = $('booksList').querySelector(`[data-cover-index="${index}"]`);
     if (!cover) return;
     cover.querySelector('.real-cover')?.remove();
@@ -295,6 +351,7 @@
     image.addEventListener('load', () => {
       if (version !== coverLookupVersion || state.stage !== 'results' || state.books[index]?.title !== book.title) return;
       cover.classList.add('has-real-cover');
+      state.books[index].coverUrl = item.coverUrl;
       $('coverCredit').hidden = false;
     }, { once: true });
     image.addEventListener('error', () => image.remove(), { once: true });
