@@ -27,8 +27,10 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('About Read &amp; Found',html)
         self.assertNotIn('more or less',html)
         self.assertIn('site-footer compact-footer',html)
-        self.assertIn('Buy me a drink',html)
-        self.assertIn('Buy me a drink on Ko-fi',html)
+        self.assertIn('Help cover running costs',html)
+        self.assertIn('Support the project',html)
+        self.assertIn('AI and hosting costs',html)
+        self.assertNotIn('buy me a drink',html.lower())
         self.assertNotIn('buy me a coffee',html.lower())
         self.assertIn('resizeFavourites()', (ROOT/'refinements-v26.js').read_text())
     def test_about_and_portrait(self):
