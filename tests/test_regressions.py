@@ -1,40 +1,47 @@
-import unittest
 from pathlib import Path
+import unittest
 ROOT=Path(__file__).resolve().parents[1]
-HTML=(ROOT/'index.html').read_text()
-CSS=(ROOT/'styles.css').read_text()
-EXTRA=(ROOT/'refinements-v26.css').read_text()
-JS=(ROOT/'app.js').read_text()
-WORKER=(ROOT/'worker/index.js').read_text()
-ADAPTER=(ROOT/'api/_adapter.js').read_text()
+html=(ROOT/'index.html').read_text()
+css=(ROOT/'styles.css').read_text()
+theme=(ROOT/'bookshop-v28.css').read_text()
+js=(ROOT/'app.js').read_text()
+worker=(ROOT/'worker/index.js').read_text()
+adapter=(ROOT/'api/_adapter.js').read_text()
 
 class RegressionTests(unittest.TestCase):
-    def test_home_mobile(self):
-        self.assertIn('Good taste is',HTML)
-        self.assertIn('Fill with an example',HTML)
-        self.assertIn('The Hunger Games',HTML)
-        self.assertIn('Normal People',HTML)
-        self.assertIn('Agatha Christie',HTML)
-        self.assertNotIn('THE READING ROOM',HTML)
-        self.assertNotIn('READ & FOUND / BOOKS ARE PERSONAL',HTML)
-        self.assertIn('refinements-v26.css',HTML)
-        self.assertIn('refinements-v26.js',HTML)
-    def test_about(self):
-        self.assertIn('for good, not evil (or profit)',HTML)
-        self.assertIn('less electricity',HTML)
-        self.assertIn('estimated to consume less water',HTML)
-        self.assertIn('Books are',HTML)
-        self.assertIn('refinements-v26.css?v=27',HTML)
-        self.assertIn('v27: iPhone About dialog',EXTRA)
-        self.assertIn('.settings-icon { display:none; }',EXTRA)
-        self.assertIn('.about-signoff { gap:10px;',EXTRA)
-    def test_backend(self):
-        self.assertIn("import worker from '../worker/index.js'",ADAPTER)
-        self.assertNotIn('_adapter_original.js',ADAPTER)
-        self.assertIn('OPENAI_API_KEY',WORKER)
-    def test_source(self):
-        self.assertGreater(len(JS),30000)
-        self.assertGreater(len(CSS)+len(EXTRA),40000)
+    def test_interface(self):
+        self.assertIn('read<span class="wordmark-amp">&amp;</span>found',html)
+        self.assertIn('We should talk about books.',html)
+        self.assertIn('bookshop-v28.css?v=28',html)
+        self.assertIn('bookshop-v28.js?v=28',html)
+        self.assertIn('Start with the books you love',html)
+        self.assertIn('Use an example',html)
+        self.assertIn('Normal People',html)
+        self.assertIn('Agatha Christie',html)
+        self.assertNotIn('class="hero-art"',html)
+        self.assertNotIn('AN IMAGINARY PRESS',html)
+        self.assertNotIn('THE READING ROOM',html)
+        self.assertNotIn('STEP 1 OF 4',html)
+        self.assertIn('Made by Drew',html)
+        self.assertIn('site-footer compact-footer',html)
+        self.assertIn('resizeFavourites()', (ROOT/'refinements-v26.js').read_text())
+    def test_about_and_portrait(self):
+        self.assertIn('Why I made this',html)
+        self.assertIn('for good, not evil (or profit)',html)
+        self.assertIn('estimated to consume less water',html)
+        self.assertIn("Hey, I'm Drew Timms",html)
+        self.assertIn('bookshop notebook',theme)
+        self.assertIn('.book-cover.has-real-cover',theme)
+        self.assertIn('prefers-reduced-motion',theme)
+        self.assertIn('character-hint.is-visible',theme)
+        self.assertIn('1050',(ROOT/'bookshop-v28.js').read_text())
+    def test_backend_unchanged(self):
+        self.assertIn('import worker',adapter)
+        self.assertNotIn('_adapter_original.js',adapter)
+        self.assertIn('OPENAI_API_KEY',worker)
+        self.assertIn('researchNotes',worker)
+        self.assertIn('has-real-cover',js)
+        self.assertIn('loadShareCover',js)
+        self.assertIn('bookshopUrl',js)
 
-if __name__=='__main__':
-    unittest.main()
+if __name__=='__main__': unittest.main()

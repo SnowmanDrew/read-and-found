@@ -124,7 +124,7 @@
 
   function renderQuestion() {
     const index = state.answers.length;
-    $('questionIndex').textContent = `OUR CONVERSATION / ${String(index+1).padStart(2,'0')} OF 03`;
+    $('questionIndex').textContent = `Question ${index+1} of 3`;
     $('progressFill').style.width = `${(index+1)/3*100}%`;
     $('questionLead').textContent = state.questions[index].lead || '';
     $('questionLead').hidden = !state.questions[index].lead;
@@ -158,7 +158,7 @@
   function coverFor(book,index) {
     const cover = document.createElement('div'); cover.className = `book-cover cover-style-${index+1}`; cover.setAttribute('aria-hidden','true');
     cover.dataset.coverIndex = String(index);
-    const top = document.createElement('span'); top.className = 'cover-top'; top.textContent = 'READ & FOUND / SELECTION';
+    const top = document.createElement('span'); top.className = 'cover-top'; top.textContent = 'Read & Found';
     const ornament = document.createElement('span'); ornament.className = `cover-ornament cover-ornament-${index+1}`;
     const bottom = document.createElement('div');
     const title = document.createElement('div'); title.className = 'cover-title'; title.textContent = book.title;
@@ -177,7 +177,7 @@
     const row = document.createElement('article');
     row.className = `book-row${index===0 ? ' is-featured' : ''}`;
     row.dataset.bookIndex = String(index);
-    row.style.animationDelay = `${index*75}ms`;
+    row.style.animationDelay = `0ms`;
     const number = document.createElement('div'); number.className = 'book-number'; number.textContent = String(index+1).padStart(2,'0');
     const info = document.createElement('div'); info.className = 'book-info';
     const kicker = document.createElement('div'); kicker.className = 'book-kicker'; kicker.textContent = book.thread || (index===0 ? 'START HERE' : 'THE CONNECTION');
@@ -441,7 +441,7 @@
       state.researchNotes = result.researchNotes || '';
       state.initialSources = Array.isArray(result.sources) ? result.sources : [];
       state.questions = [{lead:result.lead || '',question:result.question}]; renderQuestion();
-    },'Finding the first question…','A moment while we read between the lines.');
+    },'Making a note of that…','Looking for the thread between your favourites.');
   }
 
   async function answer(skip = false) {
@@ -461,7 +461,7 @@
         state.researchSources = Array.isArray(result.researchSources) ? result.researchSources : [];
         renderResults();
       }
-    },next === 3 ? 'Choosing your five books…' : 'Following that thought…',next === 3 ? 'Five good reasons to read something new.' : 'Finding the next question.');
+    },next === 3 ? 'Putting your reading list together…' : 'Another question for you…',next === 3 ? 'Checking for books you might have missed.' : 'A minute with the bookshelves.');
   }
 
   function reset() {
@@ -508,21 +508,21 @@
     const canvas=document.createElement('canvas'); canvas.width=1080; canvas.height=1440;
     const ctx=canvas.getContext('2d');
     const draw=(text,x,y,font,color)=>{ctx.font=font;ctx.fillStyle=color;ctx.fillText(text,x,y);};
-    ctx.fillStyle='#284438'; ctx.fillRect(0,0,1080,1440);
-    ctx.fillStyle='#d6a885';ctx.beginPath();ctx.arc(88,112,8,0,2*Math.PI);ctx.fill();
-    draw('read',90,119,'500 44px Georgia','#fff3e2');
+    ctx.fillStyle='#f3e1a0'; ctx.fillRect(0,0,1080,1440);
+    ctx.fillStyle='#1b304e';ctx.fillRect(88,77,8,49);
+    draw('read',90,119,'500 44px Georgia','#1b304e');
     const readWidth=ctx.measureText('read').width;
-    draw('&',90+readWidth+12,119,'italic 44px Georgia','#d6a885');
+    draw('&',90+readWidth+12,119,'italic 44px Georgia','#da553f');
     const andWidth=ctx.measureText('&').width;
-    draw('found.',90+readWidth+andWidth+29,119,'500 44px Georgia','#fff3e2');
-    draw('A READING PORTRAIT',90,191,'700 18px Arial','#b5c4ad');
-    ctx.fillStyle='rgba(243,232,201,.25)';ctx.fillRect(90,221,900,2);
-    draw('THE KIND OF READER YOU ARE',90,295,'700 17px Arial','#b7c9b4');
+    draw('found',90+readWidth+andWidth+29,119,'500 44px Georgia','#1b304e');
+    draw('NOTES ON YOUR READING',90,191,'700 18px Arial','#455775');
+    ctx.fillStyle='rgba(27,48,78,.32)';ctx.fillRect(90,221,900,2);
+    draw('SOMETHING ABOUT YOUR READING',90,295,'700 17px Arial','#455775');
     ctx.font='400 94px Georgia';
     const headingLines=wrappedLines(ctx,state.readerType,890).slice(0,3);
     let y=397;
-    for(const line of headingLines){draw(line,90,y,'400 94px Georgia','#f8eedc');y+=97;}
-    ctx.fillStyle='#d9ab85';ctx.fillRect(90,y+1,64,5);
+    for(const line of headingLines){draw(line,90,y,'400 94px Georgia','#1b304e');y+=97;}
+    ctx.fillStyle='#da553f';ctx.fillRect(90,y+1,64,5);
     y+=80;
     ctx.font='36px Georgia';
     const portraitLines=wrappedLines(ctx,state.portrait,888);
@@ -533,10 +533,10 @@
       ctx.font=`${fontSize}px Georgia`;
       portraitLines.splice(0,portraitLines.length,...wrappedLines(ctx,state.portrait,888));
     }
-    for(const line of portraitLines){draw(line,90,y,`${fontSize}px Georgia`,'#f3ead9');y+=lineHeight;}
+    for(const line of portraitLines){draw(line,90,y,`${fontSize}px Georgia`,'#1b304e');y+=lineHeight;}
     if(state.favouriteBooks.length){
       const books=state.favouriteBooks.slice(0,5);
-      draw('THE BOOKS THAT STARTED IT ALL',90,1012,'700 17px Arial','#bed0bc');
+      draw('THE BOOKS THAT STARTED IT ALL',90,1012,'700 17px Arial','#455775');
       const images=await Promise.all(books.map(b=>loadShareCover(b.coverUrl)));
       const coverWidth=156,coverHeight=224,gap=22,top=1055;
       books.forEach((book,i)=>{
@@ -556,14 +556,14 @@
           ctx.font='15px Arial';
           for(const line of wrappedLines(ctx,book.author,coverWidth-25).slice(0,3)) {ctx.fillText(line,x+17,top+coverHeight-25);}
         }
-        ctx.font='17px Arial';ctx.fillStyle='#e5eadd';
+        ctx.font='17px Arial';ctx.fillStyle='#1b304e';
         const short=wrappedLines(ctx,book.title,coverWidth-3).slice(0,2);
         short.forEach((line,j)=>ctx.fillText(line,x,top+coverHeight+32+j*23));
       });
     }
-    ctx.fillStyle='rgba(243,232,201,.25)';ctx.fillRect(90,1364,900,2);
-    draw('DRAWN FROM A CONVERSATION ABOUT BOOKS',90,1400,'700 14px Arial','#b6c5b2');
-    draw('READ & FOUND',845,1400,'700 15px Arial','#e1d0b9');
+    ctx.fillStyle='rgba(27,48,78,.32)';ctx.fillRect(90,1364,900,2);
+    draw('DRAWN FROM A CONVERSATION ABOUT BOOKS',90,1400,'700 14px Arial','#455775');
+    draw('READ & FOUND',845,1400,'700 15px Arial','#1b304e');
     return canvas;
   }
 

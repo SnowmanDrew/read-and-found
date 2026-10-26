@@ -3,30 +3,32 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f2eb">
+  <meta name="theme-color" content="#172b48">
   <meta name="description" content="Tell us what you love to read. We'll ask three good questions and recommend five books that fit.">
   <title>Read &amp; Found — Books chosen for your taste</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Newsreader:opsz,wght,ital@6..72,300,0;6..72,400,0;6..72,500,0;6..72,400,1;6..72,500,1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=26">
   <script src="lucide.min.js" defer></script>
-  <script src="app.js?v=26" defer></script>
-<link rel="stylesheet" href="refinements-v26.css?v=27">
+  <script src="app.js?v=28" defer></script>
+<link rel="stylesheet" href="refinements-v26.css?v=28">
+<link rel="stylesheet" href="bookshop-v28.css?v=28">
 <script src="refinements-v26.js?v=26" defer></script>
+<script src="bookshop-v28.js?v=28" defer></script>
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
   <div class="page-shell">
     <header class="site-header">
       <button class="wordmark" id="logoReset" type="button" aria-label="Read & Found, start again">
-        <span class="mark" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
-        <span>read<span class="wordmark-amp">&amp;</span>found<span class="wordmark-dot">.</span></span>
+        
+        <span>read<span class="wordmark-amp">&amp;</span>found</span>
       </button>
-      <div class="header-middle">A BETTER WAY TO CHOOSE A BOOK</div>
+      <div class="header-middle">a little book-finding project</div>
       <button class="header-action" id="settingsOpen" type="button" aria-label="About Read & Found">
-        <span>ABOUT</span><i data-lucide="arrow-up-right" aria-hidden="true"></i>
+        <span>About</span>
       </button>
     </header>
 
@@ -35,37 +37,31 @@
         <div class="intro-grid">
           <div class="intro-copy">
             
-            <h1 id="introHeading">Good taste is <em>hard to explain.</em></h1>
-            <p class="hero-description">Tell us what you love to read. Three thoughtful questions. Five books that feel like you.</p>
+            <h1 id="introHeading">We should talk about books.</h1>
+            <p class="hero-description">Tell me what you loved reading. I’ll ask a few questions, then find five books worth trying.</p>
+            <p class="hero-author-note">Made by Drew, because finding someone their next good book is half the fun.</p>
             <div class="quiet-proof"><i data-lucide="book-open" aria-hidden="true"></i> Three questions. Five recommendations.</div>
-          </div>
-          <div class="hero-art" aria-hidden="true">
-            <div class="orbit orbit-one"></div>
-            <div class="orbit orbit-two"></div>
-            <div class="art-book art-book-back"><span class="art-book-kicker">THE OTHER SIDE OF</span><strong>Somewhere</strong><span class="art-book-rule"></span><small>AN IMAGINARY PRESS</small></div>
-            <div class="art-book art-book-middle"><span class="art-vertical">NO. 04 / FIELD NOTES</span><span class="art-geometric"></span><span class="art-book-bottom">BOOKS FOR <br> THE CURIOUS</span></div>
-            <div class="art-book art-book-front"><div class="art-sun"></div><span class="art-front-top">A STUDY IN <br> FEELING</span><strong>After<br>the<br>last<br>page.</strong><span class="art-front-bottom">READ & FOUND &nbsp; · &nbsp; VOL. 01</span></div>
           </div>
         </div>
 
         <form id="initialForm" class="opening-form">
-          <div class="form-section-heading"><span>01</span><span>YOUR FAVOURITES</span><span class="section-rule"></span><span class="step-count">STEP 1 OF 4</span></div>
+          <div class="form-section-heading"><span>1.</span><span>Start with the books you love</span><span class="section-rule"></span></div>
           <div class="opening-form-body">
             <div class="opening-form-intro">
               <label for="favourites">Which books or authors or kinds of story do you love?</label>
-              <p>A favourite title, a writer you return to, or simply the stories you gravitate towards. Anything goes.</p>
+              <p>A favourite title, a writer you return to, or stories you always come back to.</p>
             </div>
             <div class="opening-control">
               <textarea id="favourites" rows="3" minlength="3" maxlength="1300" placeholder="I loved The Hunger Games and Normal People. I enjoy Agatha Christie, mysteries and complicated characters…" required></textarea>
               <div class="control-bottom">
-                <button type="button" class="example-button" id="useExample">Fill with an example <i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+                <button type="button" class="example-button" id="useExample">Use an example</button>
                 <span class="character-hint"><span id="characterCount">0</span> / 1300</span>
               </div>
             </div>
           </div>
           <div class="form-bottom-row">
-            <div class="form-promise">ABOUT TWO MINUTES</div>
-            <button id="beginButton" class="primary-button" type="submit" disabled><span>Start the conversation</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+            <div class="form-promise">Just a couple of minutes</div>
+            <button id="beginButton" class="primary-button" type="submit" disabled><span>Find me some books</span></button>
           </div>
         </form>
       </section>
@@ -73,14 +69,14 @@
       <section class="stage conversation-stage" id="conversationStage" aria-labelledby="questionHeading" hidden>
         <div class="journey-grid">
           <aside class="conversation-aside">
-            
-            <h2>Let's get <em>specific.</em></h2>
-            <div class="timeline-heading"><span>OUR CONVERSATION</span><span id="timelineCount">01 / 04</span></div>
+            <div class="eyebrow">A conversation about books</div>
+            <h2>Let's get specific.</h2>
+            <div class="timeline-heading"><span>Your answers</span><span id="timelineCount">01 / 04</span></div>
             <ol id="conversationLedger" class="conversation-ledger"></ol>
             <button type="button" class="subtle-link" id="restartFromJourney"><i data-lucide="rotate-ccw" aria-hidden="true"></i> Start over</button>
           </aside>
           <div class="question-main">
-            <div class="question-topline"><span id="questionIndex">OUR CONVERSATION / 01 OF 03</span><span>READ & FOUND</span></div>
+            <div class="question-topline"><span id="questionIndex">Question 1 of 3</span><span>Read & Found</span></div>
             <div class="progress-track"><span id="progressFill"></span></div>
             <div class="question-content" id="questionContent">
               <p class="question-lead" id="questionLead" hidden></p>
@@ -88,11 +84,11 @@
               <div class="question-sources" id="questionSources" hidden></div>
             </div>
             <form id="answerForm" class="answer-form">
-              <label class="input-caption" for="answerInput">YOUR ANSWER</label>
+              <label class="input-caption" for="answerInput">Your answer</label>
               <textarea id="answerInput" rows="4" maxlength="1600" placeholder="Whatever comes to mind…"></textarea>
               <div class="answer-actions">
-                <button type="button" class="text-button" id="skipAnswer">Not sure? Skip <i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
-                <button type="submit" class="primary-button" id="answerContinue" disabled><span id="continueText">Continue</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+                <button type="button" class="text-button" id="skipAnswer">Skip this one</button>
+                <button type="submit" class="primary-button" id="answerContinue" disabled><span id="continueText">Continue</span></button>
               </div>
             </form>
           </div>
@@ -102,20 +98,20 @@
       <section class="stage results-stage" id="resultsStage" aria-labelledby="resultsHeading" hidden>
         <div class="results-lede">
           <div>
-            <div class="eyebrow"><span class="eyebrow-dash"></span> YOUR READ & FOUND SELECTION</div>
-            <h1 id="resultsHeading">Five books.<br><em>Chosen for you.</em></h1>
-            <p class="results-subtitle">Some close affinities. Some less obvious turns.</p>
+            <div class="eyebrow">A reading list, just for you</div>
+            <h1 id="resultsHeading">Five for your pile.</h1>
+            <p class="results-subtitle">A few familiar things. A few unexpected ones.</p>
           </div>
-          <div class="results-seal" aria-hidden="true"><span>A READ & FOUND<br>SELECTION</span><strong>5</strong><span>THOUGHTFUL<br>RECOMMENDATIONS</span></div>
+          
         </div>
         <section class="portrait-panel" aria-label="Your reading portrait">
           <div class="portrait-topline">
-            <div class="portrait-label"><i data-lucide="asterisk" aria-hidden="true"></i> YOUR READING PORTRAIT</div>
-            <span class="portrait-topline-note">NOTES FROM OUR CONVERSATION</span>
+            <div class="portrait-label"><i data-lucide="asterisk" aria-hidden="true"></i> Your reading notes</div>
+            <span class="portrait-topline-note">From our conversation</span>
           </div>
           <div class="portrait-content">
             <div class="portrait-identity">
-              <span class="portrait-overline">A FEW THINGS ABOUT YOUR READING</span>
+              <span class="portrait-overline">A note on your taste</span>
               <h2 id="readerType"></h2>
               
             </div>
@@ -125,17 +121,17 @@
             </div>
           </div>
           <div class="portrait-favourites" id="portraitFavourites" hidden>
-            <div class="portrait-favourites-head"><span>THE BOOKS THAT STARTED IT ALL</span><span>YOUR FAVOURITES</span></div>
+            <div class="portrait-favourites-head"><span>The books you started with</span><span>Your favourites</span></div>
             <div class="portrait-favourite-shelf" id="portraitFavouriteShelf"></div>
           </div>
-          <div class="portrait-footer"><span>DRAWN FROM OUR CONVERSATION</span><span>READ & FOUND · A READING PORTRAIT</span></div>
+          <div class="portrait-footer"><span>Written from our conversation</span><span>Read & Found · your reading notes</span></div>
         </section>
         <div class="portrait-share-actions">
-          <div><strong>Make it yours.</strong><span>Save your reading portrait as a keepsake, or share it with a friend.</span></div>
+          <div><strong>Keep this bit.</strong><span>Save these notes, or send them to another reader.</span></div>
           <button class="outline-button" type="button" id="downloadPortrait"><i data-lucide="download" aria-hidden="true"></i> Save portrait</button>
           <button class="primary-button" type="button" id="sharePortrait"><span>Share my portrait</span><i data-lucide="share-2" aria-hidden="true"></i></button>
         </div>
-        <div class="recommendations-heading"><span>THE RECOMMENDATIONS</span><span class="heading-rule"></span><span>01 — 05</span></div>
+        <div class="recommendations-heading"><span>Five books to try</span><span class="heading-rule"></span><span>01 — 05</span></div>
         <div class="books-list" id="booksList"></div>
         <div class="visually-hidden" id="swapAnnouncement" role="status" aria-live="polite"></div>
         <p class="cover-credit" id="coverCredit" hidden>Cover imagery via <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>.</p>
@@ -145,8 +141,8 @@
         </details>
         <div class="affiliate-disclosure"><i data-lucide="heart-handshake" aria-hidden="true"></i><p>We recommend books because they suit you, never because of a commission. Some Bookshop.org links may earn Read & Found a small commission, at no extra cost to you, helping support this independent project.</p></div>
         <div class="endnote">
-          <h2>Find something <em>good.</em></h2>
-          <p class="endnote-description">Enjoyed the experience? This little reading room is a hobby project. If you'd like to help keep it open, you can buy me a coffee.</p>
+          <h2>Let me know how you get on.</h2>
+          <p class="endnote-description">This is a hobby project. If it helped you find something to read, you can buy me a coffee.</p>
           <a class="kofi-link" href="https://ko-fi.com/readandfound" target="_blank" rel="noopener noreferrer" id="kofiSupport"><i data-lucide="coffee" aria-hidden="true"></i><span>Support Read & Found on Ko-fi</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
           <div class="endnote-actions">
             <button class="primary-button" type="button" id="startAgain"><span>Start again</span><i data-lucide="rotate-ccw" aria-hidden="true"></i></button>
@@ -157,27 +153,27 @@
     </main>
 
     <footer class="site-footer compact-footer">
-      <span class="footer-note">AN INDEPENDENT READING EXPERIMENT</span>
+      <span class="footer-note">Made by Drew, for people who love talking about books.</span>
       <div class="footer-actions">
-        <a href="https://ko-fi.com/readandfound" id="footerKofi" target="_blank" rel="noopener noreferrer">SUPPORT THE PROJECT <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
-        <button type="button" id="footerSettings">ABOUT <i data-lucide="arrow-up-right" aria-hidden="true"></i></button>
+        <a href="https://ko-fi.com/readandfound" id="footerKofi" target="_blank" rel="noopener noreferrer">Buy me a coffee <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
+        <button type="button" id="footerSettings">About</button>
       </div>
     </footer>
   </div>
 
   <div id="loadingOverlay" class="loading-overlay" hidden role="status" aria-live="polite">
-    <div class="loading-card"><div class="loading-flower" id="loadingIcon"><i data-lucide="loader-circle" aria-hidden="true"></i></div><div id="loadingTitle" class="loading-title">Thinking about that…</div><p id="loadingDetail">Finding the right question to ask next.</p><span id="loadingRule" class="loading-rule"></span><button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button><button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button></div>
+    <div class="loading-card"><div class="loading-flower" id="loadingIcon"><i data-lucide="loader-circle" aria-hidden="true"></i></div><div id="loadingTitle" class="loading-title">A note from the shelves</div><p id="loadingDetail">Looking for the right books and the right questions.</p><span id="loadingRule" class="loading-rule"></span><button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button><button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button></div>
   </div>
 
   <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsHeading">
     <div class="settings-inner">
-      <div class="settings-top"><span class="eyebrow">ABOUT READ & FOUND</span><button class="close-dialog" id="settingsClose" aria-label="Close" type="button"><i data-lucide="x" aria-hidden="true"></i></button></div>
-      <div class="settings-icon"><i data-lucide="book-open" aria-hidden="true"></i></div>
-      <h2 id="settingsHeading">Books are <em>personal.</em></h2>
+      <div class="settings-top"><span class="eyebrow">The small print, more or less</span><button class="close-dialog" id="settingsClose" aria-label="Close" type="button"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      
+      <h2 id="settingsHeading">Why I made this</h2>
       <p>Finding your next favourite book should be about more than picking a genre. Read & Found starts with the books, authors or kinds of stories you love, asks you three questions to get to know your taste, and suggests five books you might never have found otherwise.</p>
       <p>It's a little experiment in what we can do with AI for good, not evil (or profit). The point isn't to replace a bookseller or a conversation with a friend, but to help people discover something they might love.</p>
       <p>AI has an environmental footprint, but a set of recommendations uses significantly less electricity and is estimated to consume less water than boiling a full kettle or watching an hour of Netflix.</p>
-      <div class="about-signoff"><span class="about-signoff-mark" aria-hidden="true"><i data-lucide="asterisk"></i></span><p>Hey, I'm Drew Timms. I made Read & Found as a hobby project. Hope you enjoy it!</p></div>
+      <div class="about-signoff"><p>Hey, I'm Drew Timms. I made Read & Found as a hobby project. Hope you enjoy it!</p></div>
     </div>
   </dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
