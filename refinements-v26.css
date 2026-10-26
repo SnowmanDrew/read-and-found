@@ -32,3 +32,22 @@
 }
 @media(max-width:380px){.compact-footer .footer-actions a,.compact-footer .footer-actions button{font-size:8px}}
 @media(max-width:600px) and (max-height:720px){.opening-control textarea{min-height:80px;height:80px}}
+
+/* v27: iPhone About dialog — present the full sign-off above the fold
+   on common phone sizes, while allowing scroll on shorter viewports. */
+@media (max-width:600px) {
+ .settings-dialog {
+  width:calc(100% - 20px);
+  max-height:calc(100dvh - 18px);
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+ }
+ .settings-inner { padding:16px 19px 18px; }
+ .settings-top { position:sticky;top:0;z-index:2;background:#f9f7f0;margin-bottom:4px;min-height:40px; }
+ .settings-icon { display:none; }
+ .settings-inner h2 { font-size:clamp(42px,11vw,50px);line-height:1.02;margin:3px 0 11px; }
+ .settings-inner>p { font-size:14px;line-height:1.47;margin:0 0 10px; }
+ .about-signoff { gap:10px;margin-top:12px;padding-top:12px; }
+ .settings-inner .about-signoff p { font-size:18px;line-height:1.22; }
+}

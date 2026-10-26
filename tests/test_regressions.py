@@ -24,6 +24,10 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('less electricity',HTML)
         self.assertIn('estimated to consume less water',HTML)
         self.assertIn('Books are',HTML)
+        self.assertIn('refinements-v26.css?v=27',HTML)
+        self.assertIn('v27: iPhone About dialog',EXTRA)
+        self.assertIn('.settings-icon { display:none; }',EXTRA)
+        self.assertIn('.about-signoff { gap:10px;',EXTRA)
     def test_backend(self):
         self.assertIn("import worker from '../worker/index.js'",ADAPTER)
         self.assertNotIn('_adapter_original.js',ADAPTER)
