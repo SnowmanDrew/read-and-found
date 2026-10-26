@@ -22,13 +22,14 @@
   <link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=26">
   <script src="lucide.min.js" defer></script>
-  <script src="app.js?v=35" defer></script>
+  <script src="app.js?v=36" defer></script>
 <link rel="stylesheet" href="refinements-v26.css?v=28">
 <link rel="stylesheet" href="bookshop-v28.css?v=29">
 <link rel="stylesheet" href="editorial-v30.css?v=31">
 <link rel="stylesheet" href="signature-v32.css?v=32">
 <link rel="stylesheet" href="polish-v33.css?v=33">
 <link rel="stylesheet" href="reading-list-v34.css?v=35">
+<link rel="stylesheet" href="shelf-loader-v36.css?v=36">
 <script src="refinements-v26.js?v=26" defer></script>
 <script src="bookshop-v28.js?v=28" defer></script>
 </head>
@@ -192,7 +193,55 @@
   </div>
 
   <div id="loadingOverlay" class="loading-overlay" hidden role="status" aria-live="polite">
-    <div class="loading-card"><div class="loading-kicker" id="loadingKicker">A note from the shelves</div><div class="loading-flower" id="loadingIcon"><i data-lucide="loader-circle" aria-hidden="true"></i></div><div id="loadingTitle" class="loading-title">A note from the shelves</div><p id="loadingDetail">Looking for the right books and the right questions.</p><div class="loading-progress" aria-hidden="true"><span id="loadingRule" class="loading-rule"></span></div><button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button><button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button></div>
+    <div class="loading-card">
+      <p class="loading-kicker" id="loadingKicker">A note from the shelves</p>
+      <h2 id="loadingTitle" class="loading-title">A note from the shelves</h2>
+      <p id="loadingDetail" class="loading-detail">Looking for the right books and the right questions.</p>
+      <div class="loading-shelf-art" id="loadingIcon" aria-hidden="true">
+        <svg class="loading-shelf" viewBox="0 0 140 70" aria-hidden="true">
+      <!-- books -->
+      <g class="bk b1">
+        <rect x="22" y="28" width="12" height="30" rx="1.5" />
+        <line class="band" x1="25" y1="34" x2="31" y2="34" />
+        <line class="band" x1="25" y1="52" x2="31" y2="52" />
+      </g>
+      <g class="bk b2">
+        <rect x="36" y="22" width="9" height="36" rx="1.5" />
+        <line class="band" x1="38.5" y1="29" x2="42.5" y2="29" />
+      </g>
+      <g class="bk b3">
+        <rect x="47" y="32" width="14" height="26" rx="1.5" />
+        <line class="band" x1="50" y1="38" x2="58" y2="38" />
+        <line class="band" x1="50" y1="41.5" x2="58" y2="41.5" />
+      </g>
+      <g class="bk b4">
+        <rect x="63" y="25" width="10" height="33" rx="1.5" />
+        <line class="band" x1="65.5" y1="31" x2="70.5" y2="31" />
+        <line class="band" x1="65.5" y1="51" x2="70.5" y2="51" />
+      </g>
+      <g class="bk b5">
+        <rect x="75" y="29" width="12" height="29" rx="1.5" />
+        <line class="band" x1="78" y1="35" x2="84" y2="35" />
+      </g>
+      <g class="bk b6">
+        <rect x="89" y="23" width="8" height="35" rx="1.5" />
+        <line class="band" x1="91.5" y1="49" x2="94.5" y2="49" />
+      </g>
+      <!-- one book leaning on the end, never moves -->
+      <g class="lean">
+        <rect x="105" y="28" width="11" height="30" rx="1.5"
+              transform="rotate(-15 105 58)"
+              fill="var(--paper)" stroke="var(--navy)" stroke-width="2.5" />
+      </g>
+      <!-- shelf and brackets -->
+      <line class="line" x1="10" y1="60" x2="130" y2="60" />
+      <line class="line" x1="22" y1="60" x2="22" y2="66" />
+      <line class="line" x1="118" y1="60" x2="118" y2="66" />
+    </svg>
+      </div>
+      <button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button>
+      <button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button>
+    </div>
   </div>
 
   <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsHeading">

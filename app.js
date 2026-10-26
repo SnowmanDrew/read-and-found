@@ -72,7 +72,7 @@
     advance(); loadingTicker = setInterval(advance,7200);
     $('loadingOverlay').classList.toggle('is-long-wait',longWait);
     $('loadingOverlay').classList.toggle('is-question-wait',!longWait);
-    $('loadingIcon').hidden = false; $('loadingRule').hidden = false;
+    $('loadingIcon').hidden = false;
     $('retryButton').hidden = true; $('backFromError').hidden = true;
     $('loadingOverlay').hidden = false; document.body.style.overflow = 'hidden';
   }
@@ -91,7 +91,7 @@
     $('loadingKicker').textContent = 'A note from the shelves';
     $('loadingTitle').textContent = 'A small interruption.';
     $('loadingDetail').textContent = message;
-    $('loadingIcon').hidden = true; $('loadingRule').hidden = true;
+    $('loadingIcon').hidden = true;
     $('retryButton').hidden = /two sets of recommendations today|book swaps available today/i.test(message);
     $('backFromError').hidden = false;
   }
@@ -493,8 +493,26 @@
     feedback.replaceChildren();
     const status = document.createElement('div'); status.className = 'swap-status'; status.setAttribute('role','status');
     if (!retryJob) {
-      const spinner = document.createElement('i'); spinner.dataset.lucide = 'loader-circle'; spinner.setAttribute('aria-hidden','true');
-      status.append(spinner,document.createTextNode(message));
+      const icon = document.createElement('span'); icon.className = 'swap-page-icon'; icon.setAttribute('aria-hidden','true');
+      icon.innerHTML = `<svg class="swap-page-turn" viewBox="0 0 120 64" aria-hidden="true">
+      <g class="lines">
+        <path d="M8 50 H52 Q60 57 68 50 H112" />
+        <path d="M58 46 Q37 43 16 42" />
+        <path d="M62 46 Q83 43 104 42" />
+        <line class="page p1" x1="60" y1="46" x2="102" y2="46" />
+        <line class="page p2" x1="60" y1="46" x2="102" y2="46" />
+        <line class="page p3" x1="60" y1="46" x2="102" y2="46" />
+      </g>
+      <path class="ribbon" d="M60 54 Q62 59 59 63" />
+    </svg>`;
+      const label = document.createElement('span'); label.className = 'swap-status-copy';
+      const separator = message.indexOf('. ');
+      if (separator > 0) {
+        const verdict = document.createElement('strong'); verdict.textContent = message.slice(0,separator+1).toLowerCase();
+        const detail = document.createElement('em'); detail.textContent = message.slice(separator+2).toLowerCase();
+        label.append(verdict,document.createTextNode(' '),detail);
+      } else label.textContent = message;
+      status.append(icon,label);
     } else {
       const note = document.createElement('span'); note.textContent = message;
       const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'swap-retry'; retry.textContent = 'Try again';
