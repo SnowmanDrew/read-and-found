@@ -87,12 +87,13 @@ class RegressionTests(unittest.TestCase):
 
     def test_ruled_handwritten_answers(self):
         sheet=(ROOT/'editorial-v30.css').read_text()
-        self.assertIn('Patrick+Hand',html)
+        self.assertNotIn('Patrick+Hand',html)
+        self.assertIn('polish-v33.css?v=33',html)
         self.assertIn('editorial-v30.css?v=31',html)
         self.assertIn("--answer-line-height: 32px",sheet)
         self.assertIn("--answer-line-height: 30px",sheet)
         self.assertIn("background-attachment: local",sheet)
-        self.assertIn("font-family: 'Patrick Hand'",sheet)
+        self.assertIn("font-family:'Source Serif 4'",(ROOT/'polish-v33.css').read_text())
 
     def test_signature_animation_and_selective_lowercase(self):
         stamp=(ROOT/'signature-v32.css').read_text()
@@ -105,5 +106,20 @@ class RegressionTests(unittest.TestCase):
         self.assertNotIn('.book-title {text-transform',stamp)
         self.assertIn("stamp-revealed",js)
         self.assertIn("requestAnimationFrame",js)
+
+    def test_polish_round_33(self):
+        polish=(ROOT/'polish-v33.css').read_text()
+        self.assertIn('polish-v33.css?v=33',html)
+        self.assertIn('#readerType,',polish)
+        self.assertIn('portraitAuthors',html)
+        self.assertIn('favouriteAuthors',js)
+        self.assertIn('favouriteAuthors',worker)
+        self.assertIn('book-match-badge',js)
+        self.assertIn('closest_match',worker)
+        self.assertIn("'wildcard'",worker)
+        self.assertIn('Never mention skipped questions',worker)
+        self.assertIn('IMPORTANT NEGATIVE PREFERENCES',worker)
+        self.assertIn('openlibrary.org/search.json',worker)
+        self.assertIn('portrait-book-cover img',polish)
 
 if __name__=='__main__': unittest.main()

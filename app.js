@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', favouriteBooks: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
+  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
   const stages = { intro: $('introStage'), conversation: $('conversationStage'), results: $('resultsStage') };
   let loadingTicker = null;
   let retryAction = null;
@@ -198,7 +198,10 @@
     row.style.animationDelay = `0ms`;
     const number = document.createElement('div'); number.className = 'book-number'; number.textContent = String(index+1).padStart(2,'0');
     const info = document.createElement('div'); info.className = 'book-info';
-    const kicker = document.createElement('div'); kicker.className = 'book-kicker'; kicker.textContent = book.thread || (index===0 ? 'START HERE' : 'THE CONNECTION');
+    const kicker = document.createElement('div'); kicker.className = 'book-kicker'; kicker.textContent = book.thread || (index===0 ? 'Start here' : 'The connection');
+    const roleLabels = {closest_match:'closest match',tone_match:'your kind of mood',wildcard:'wildcard'};
+    const roleBadge = roleLabels[book.role] ? document.createElement('span') : null;
+    if (roleBadge) { roleBadge.className = 'book-match-badge'; roleBadge.textContent = roleLabels[book.role]; }
     const title = document.createElement('h3'); title.className = 'book-title'; title.textContent = book.title;
     const author = document.createElement('p'); author.className = 'book-author'; author.textContent = `by ${book.author}`;
     const reason = document.createElement('p'); reason.className = 'book-reason'; reason.textContent = book.reason;
@@ -233,7 +236,9 @@
       readButton.setAttribute('aria-expanded',String(opening));
     });
     feedback.append(readButton,choices);
-    info.append(kicker,title,author,reason);
+    info.append(kicker);
+    if (roleBadge) info.append(roleBadge);
+    info.append(title,author,reason);
     const links = document.createElement('div'); links.className = 'book-links';
     if (source) links.append(source);
     const buy = document.createElement('a'); buy.className = 'book-buy'; buy.target = '_blank';
@@ -321,7 +326,24 @@
     const section = $('portraitFavourites'), shelf = $('portraitFavouriteShelf');
     shelf.replaceChildren();
     const books = state.favouriteBooks.slice(0,6);
-    section.hidden = !books.length;
+    const authors = (state.favouriteAuthors || []).filter(author =>
+      !books.some(book => book.author.toLowerCase() === author.toLowerCase()));
+    const authorsBlock = $('portraitAuthors');
+    authorsBlock.replaceChildren();
+    if (authors.length) {
+      const label = document.createElement('span');
+      label.className = 'portrait-authors-heading';
+      label.textContent = 'Authors you mentioned';
+      authorsBlock.append(label);
+      for (const author of authors) {
+        const name = document.createElement('span');
+        name.className = 'portrait-author-name';
+        name.textContent = author;
+        authorsBlock.append(name);
+      }
+    }
+    authorsBlock.hidden = !authors.length;
+    section.hidden = !books.length && !authors.length;
     if (!books.length) return;
     const elements = books.map((book,index) => {
       const item = document.createElement('div'); item.className = 'portrait-favourite';
@@ -470,7 +492,7 @@
   }
 
   async function answer(skip = false) {
-    const pending = skip ? 'I’m not sure. Surprise me.' : trim($('answerInput').value);
+    const pending = skip ? '(skipped)' : trim($('answerInput').value);
     if (pending.length < 2) return;
     const next = state.answers.length + 1;
     const history = historyWith(pending);
@@ -483,6 +505,7 @@
         if (!Array.isArray(result.books) || result.books.length !== 5 || !result.readerType || !result.portrait) throw new Error('The recommendations were incomplete. Try again.');
         state.answers.push(pending); state.books = result.books; state.readerType = result.readerType; state.portrait = result.portrait;
         state.favouriteBooks = Array.isArray(result.favouriteBooks) ? result.favouriteBooks.slice(0,6) : [];
+        state.favouriteAuthors = Array.isArray(result.favouriteAuthors) ? result.favouriteAuthors.slice(0,8) : [];
         state.researchSources = Array.isArray(result.researchSources) ? result.researchSources : [];
         renderResults();
       }
@@ -493,7 +516,7 @@
     if (state.busy) return;
     coverLookupVersion++; favouriteCoverLookupVersion++;
     recommendationEpoch++; activeSwapController?.abort(); swapQueue=[];
-    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.feedback=[]; state.sessionId='';
+    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.favouriteAuthors=[]; state.feedback=[]; state.sessionId='';
     $('favourites').value=''; $('characterCount').textContent='0'; $('beginButton').disabled=true;
     stages.results.classList.remove('stamp-revealed');
     stage('intro');

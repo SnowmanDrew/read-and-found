@@ -27,3 +27,10 @@ Keep the site personal and useful. The site should feel as if someone who genuin
 ## One signature interaction
 - When the complete list appears, a bookshop-style **for your shelves** ink stamp lands once on the results header. No other generic results fade-up; honour reduced-motion preferences.
 - Selectively lowercase site-owned headlines, labels, navigation and button copy via CSS only. Keep book titles, authors, questions, reader portraits and longer prose in normal case.
+
+## Polish (v33)
+- Lowercase only site-owned headings and brief interface labels. Preserve published book titles, author names, all questions and longer writing.
+- Use the italic reading serif on lined answer paper; do not use novelty handwriting type.
+- Reflect readers' actual authors and covers in the portrait, and show full cover images without cropping.
+- The five recommendations aim for a grounded closest match, a tonal match and a careful wildcard, while respecting explicit negative preferences.
+- A skipped question is missing information, never content for the portrait. Avoid repetitive either/or questions and em dashes.
