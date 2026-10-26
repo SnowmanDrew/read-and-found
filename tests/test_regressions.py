@@ -12,7 +12,7 @@ class RegressionTests(unittest.TestCase):
     def test_interface(self):
         self.assertIn('read<span class="wordmark-amp">&amp;</span>found',html)
         self.assertIn('We should talk about books.',html)
-        self.assertIn('bookshop-v28.css?v=28',html)
+        self.assertIn('bookshop-v28.css?v=29',html)
         self.assertIn('bookshop-v28.js?v=28',html)
         self.assertIn('Start with the books you love',html)
         self.assertIn('Use an example',html)
@@ -35,6 +35,13 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('prefers-reduced-motion',theme)
         self.assertIn('character-hint.is-visible',theme)
         self.assertIn('1050',(ROOT/'bookshop-v28.js').read_text())
+    def test_bookish_typography(self):
+        self.assertNotIn('IBM+Plex+Mono',html)
+        self.assertNotIn("--ui-font:'IBM Plex Mono'",theme)
+        self.assertIn("--ui-font:'Source Serif 4'",theme)
+        self.assertIn('.hero-author-note {font:italic 400 17px',theme)
+        self.assertIn('font:600 18px/1.25 var(--ui-font)',theme)
+        self.assertIn('.character-hint {opacity:0;transition:opacity .2s;font:11px var(--font-sans)',theme)
     def test_backend_unchanged(self):
         self.assertIn('import worker',adapter)
         self.assertNotIn('_adapter_original.js',adapter)

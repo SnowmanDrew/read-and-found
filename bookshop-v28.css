@@ -9,7 +9,7 @@
   --sage:#e6edf4;--cream:#f4e4ac;
   --font-serif:'Fraunces',Georgia,serif;
   --font-sans:'IBM Plex Sans',Arial,sans-serif;
-  --ui-font:'IBM Plex Mono',monospace;
+  --ui-font:'Source Serif 4',Georgia,serif;
   --book-font:'Source Serif 4',Georgia,serif;
 }
 html {background:var(--paper)}
@@ -25,7 +25,7 @@ em {font-style:normal}
 .wordmark .wordmark-dot {display:none}
 .site-header .mark {display:none}
 .header-middle {font:italic 16px/1.2 var(--book-font);color:var(--ink);letter-spacing:0;text-transform:none;opacity:.75}
-.header-action,.site-header .header-action {font:500 13px/1.2 var(--ui-font);letter-spacing:0;text-transform:none;gap:0;color:var(--ink)}
+.header-action,.site-header .header-action {font:500 16px/1.2 var(--ui-font);letter-spacing:0;text-transform:none;gap:0;color:var(--ink)}
 .header-action .lucide {display:none}
 
 /* Opening is a bold bookshop front, not a symmetric marketing hero. */
@@ -35,11 +35,11 @@ em {font-style:normal}
 .intro-copy h1 {font-family:var(--font-serif);font-style:normal;font-variation-settings:'WONK' 1;font-weight:600;letter-spacing:-.075em;font-size:clamp(68px,9.7vw,160px);line-height:.96;max-width:1000px;margin:0 0 34px;color:#fff}
 .intro-copy h1 em {font-style:normal;color:inherit}
 .intro-copy .hero-description {font:400 clamp(21px,2.35vw,31px)/1.27 var(--book-font);letter-spacing:-.015em;max-width:650px;color:#e7ecf2;margin:0 0 23px}
-.hero-author-note {font:400 13px/1.5 var(--ui-font);color:#e9c46e;max-width:560px;margin:0}
+.hero-author-note {font:italic 400 17px/1.38 var(--book-font);color:#f3daa4;max-width:650px;margin:0}
 .intro-grid .hero-art,.quiet-proof {display:none!important}
 /* A real reading slip, not the default bordered SaaS card. */
 .opening-form {position:relative;margin:-43px clamp(24px,5vw,84px) 76px 8vw;box-shadow:14px 14px 0 #d5dfe8;background:#eff3f7;border:0;color:var(--ink);z-index:1}
-.form-section-heading {background:transparent;border:0;border-bottom:1px solid var(--ink);display:flex;align-items:baseline;gap:14px;padding:22px 32px 12px;font:500 15px/1.3 var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
+.form-section-heading {background:transparent;border:0;border-bottom:1px solid var(--ink);display:flex;align-items:baseline;gap:14px;padding:22px 32px 12px;font:500 17px/1.3 var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
 .form-section-heading>span:first-child {font-family:var(--font-serif);font-size:31px;letter-spacing:-.055em;color:var(--accent);font-weight:600}
 .form-section-heading>span:nth-child(2) {font-weight:500}
 .form-section-heading .section-rule,.form-section-heading .step-count {display:none}
@@ -49,17 +49,17 @@ em {font-style:normal}
 .opening-control textarea {background:transparent;border:0;border-bottom:2px solid var(--ink);padding:8px 4px 10px;color:var(--ink);font:400 17px/1.55 var(--book-font);box-shadow:none;border-radius:0}
 .opening-control textarea::placeholder {color:#738094;font-style:italic;font-family:var(--book-font);opacity:1}
 .control-bottom {margin-top:11px}
-.example-button {display:inline-block;border:0;border-bottom:1px solid var(--ink);border-radius:0;background:none;padding:3px 0;font:500 12px/1.3 var(--ui-font);text-decoration:none;color:var(--ink);min-height:unset;letter-spacing:0}
+.example-button {display:inline-block;border:0;border-bottom:1px solid var(--ink);border-radius:0;background:none;padding:3px 0;font:500 16px/1.3 var(--ui-font);text-decoration:none;color:var(--ink);min-height:unset;letter-spacing:0}
 .example-button:hover {background:transparent;color:var(--accent)}
 .example-button svg {display:none}
-.character-hint {opacity:0;transition:opacity .2s;font:11px var(--ui-font);color:var(--secondary)}
+.character-hint {opacity:0;transition:opacity .2s;font:11px var(--font-sans);color:var(--secondary)}
 .character-hint.is-visible {opacity:1}
 .form-bottom-row {background:transparent;border-top:1px solid var(--line);padding:17px 32px 24px}
 .form-promise {font:400 12px var(--book-font);text-transform:none;letter-spacing:0;color:var(--secondary)}
-.primary-button {background:var(--accent);color:white;border:0;border-radius:0;box-shadow:5px 5px 0 var(--ink);font:600 14px/1.3 var(--ui-font);letter-spacing:0;transition:transform .12s,box-shadow .12s,background .12s}
+.primary-button {background:var(--accent);color:white;border:0;border-radius:0;box-shadow:5px 5px 0 var(--ink);font:600 18px/1.25 var(--ui-font);letter-spacing:-.012em;transition:transform .12s,box-shadow .12s,background .12s}
 .primary-button:hover:not(:disabled) {transform:translate(2px,2px);box-shadow:3px 3px 0 var(--ink);background:#a93e2b}
 .primary-button:disabled {background:#a9b3bf;color:#e5e8ec;box-shadow:5px 5px 0 #8193a7;opacity:.85}
-.outline-button {border-radius:0;border:1px solid var(--ink);background:transparent;color:var(--ink);font:500 13px/1.3 var(--ui-font)}
+.outline-button {border-radius:0;border:1px solid var(--ink);background:transparent;color:var(--ink);font:500 16px/1.3 var(--ui-font)}
 .outline-button:hover {background:#e9edf2;color:var(--ink)}
 .primary-button .lucide-arrow-up-right,.text-button .lucide-arrow-up-right,.example-button .lucide-arrow-up-right,.outline-button .lucide-arrow-up-right {display:none}
 
@@ -71,17 +71,17 @@ em {font-style:normal}
 .conversation-aside .eyebrow {font:italic 17px var(--book-font);color:var(--accent);letter-spacing:0;text-transform:none}
 .conversation-aside .eyebrow-dash {display:none}
 .question-main {border-left:3px solid var(--ink)}
-.question-topline {font:500 12px var(--ui-font);letter-spacing:0;text-transform:none;color:var(--ink)}
+.question-topline {font:500 15px var(--ui-font);letter-spacing:0;text-transform:none;color:var(--ink)}
 .question-topline span:last-child {opacity:.6}
 .progress-track {background:#d3dbe3;height:4px}.progress-track span {background:var(--accent)}
 .question-content h2 {font-family:var(--font-serif);font-variation-settings:'WONK' 1;font-weight:500;font-size:clamp(44px,5.6vw,76px);letter-spacing:-.055em;line-height:1.06;color:var(--ink)}
 .question-lead {font:italic 20px/1.4 var(--book-font);color:var(--secondary)}
 .answer-form {border-top:1px solid var(--ink)}
-.input-caption {font:500 12px var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
+.input-caption {font:500 14px var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
 .answer-form textarea {border:0;border-bottom:2px solid var(--ink);background:transparent;font:400 18px/1.55 var(--book-font);border-radius:0;color:var(--ink)}
 .answer-form textarea::placeholder {font-style:italic;color:#748498}
-.answer-actions .text-button {font:500 12px var(--ui-font);text-decoration:underline;text-underline-offset:3px;color:var(--secondary)}
-.timeline-heading,.conversation-ledger {font:12px var(--ui-font)}
+.answer-actions .text-button {font:500 16px var(--ui-font);text-decoration:underline;text-underline-offset:3px;color:var(--secondary)}
+.timeline-heading,.conversation-ledger {font:14px var(--ui-font)}
 
 /* Results should look like an edited reading list, with genuine cover imagery. */
 .results-stage {padding-top:44px}
@@ -91,12 +91,12 @@ em {font-style:normal}
 .results-lede h1 {font-family:var(--font-serif);font-weight:600;font-variation-settings:'WONK' 1;letter-spacing:-.065em;font-size:clamp(62px,8.5vw,130px);line-height:.93;margin:0 0 20px;color:#fff}
 .results-lede h1 em {font-style:normal;color:inherit}
 .results-subtitle {font:400 20px/1.35 var(--book-font);color:#dce4ef;max-width:600px}
-.recommendations-heading {border-top:2px solid var(--ink);padding-top:22px;font:500 16px var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
+.recommendations-heading {border-top:2px solid var(--ink);padding-top:22px;font:600 21px var(--ui-font);text-transform:none;letter-spacing:0;color:var(--ink)}
 .recommendations-heading .heading-rule {background:var(--line)}
 .books-list {display:grid;grid-template-columns:1fr;gap:0;margin-top:18px}
 .book-row,.book-row.is-featured {grid-column:auto;grid-template-columns:50px 132px minmax(0,1fr);gap:27px;min-height:0;border-top:1px solid #aab9c8;border-bottom:0;padding:36px 0;align-items:start;background:transparent}
 .book-row:last-child {border-bottom:2px solid var(--ink)}
-.book-number {font:500 15px var(--ui-font);color:var(--accent);letter-spacing:0;margin-top:8px}
+.book-number {font:italic 500 19px var(--ui-font);color:var(--accent);letter-spacing:0;margin-top:8px}
 .book-cover,.is-featured .book-cover {width:132px;aspect-ratio:2/3;height:auto;min-height:198px;border:0;box-shadow:4px 5px 0 rgba(24,43,74,.17);background:#e5e5db;color:var(--ink);padding:14px}
 .book-cover:not(.has-cover-image) {background:#e2e7ec;border:1px solid #bac4cf;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
 .book-cover:not(.has-cover-image) .cover-top,.book-cover:not(.has-cover-image) .cover-ornament {display:none}
@@ -108,7 +108,7 @@ em {font-style:normal}
 .book-row .book-title,.book-row.is-featured .book-title {font-family:var(--font-serif);font-weight:550;font-size:clamp(32px,4.6vw,62px);line-height:1.02;letter-spacing:-.05em;color:var(--ink)}
 .book-row .book-author,.is-featured .book-author {font:400 17px var(--book-font);color:var(--secondary)}
 .book-row .book-reason,.book-row.is-featured .book-reason {font:400 17px/1.5 var(--book-font);max-width:800px;color:#394e67}
-.read-trigger,.book-buy,.book-source {font:500 12px var(--ui-font);color:var(--ink);letter-spacing:0}
+.read-trigger,.book-buy,.book-source {font:500 16px var(--ui-font);color:var(--ink);letter-spacing:0}
 .book-buy {text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
 .book-feedback {margin-top:18px}
 .read-trigger .lucide {display:none}
@@ -119,7 +119,7 @@ em {font-style:normal}
 /* A pale-yellow, actual bookplate-like reading record. The PNG uses the same colours. */
 .portrait-panel {background:#f3e1a0;color:var(--ink);box-shadow:9px 9px 0 #d8d4c5;border:0;padding:32px clamp(24px,4vw,58px) 26px}
 .portrait-topline,.portrait-footer,.portrait-favourites {border-color:#8291a8}
-.portrait-label,.portrait-topline-note,.portrait-overline,.portrait-favourites-head,.portrait-footer {font:500 12px var(--ui-font);letter-spacing:0;text-transform:none;color:#334d70}
+.portrait-label,.portrait-topline-note,.portrait-overline,.portrait-favourites-head,.portrait-footer {font:500 14px var(--ui-font);letter-spacing:0;text-transform:none;color:#334d70}
 .portrait-label .lucide {display:none}
 .portrait-content {grid-template-columns: .87fr 1.13fr;padding:45px 0 47px;gap:36px}
 .portrait-content h2 {font-family:var(--font-serif);font-variation-settings:'WONK' 1;font-style:normal;font-weight:600;color:var(--ink);font-size:clamp(48px,5.4vw,79px);letter-spacing:-.055em}
@@ -146,13 +146,13 @@ em {font-style:normal}
 .settings-inner .about-signoff p {font:italic 400 21px/1.32 var(--book-font);color:var(--ink)}
 .site-footer {border-top:2px solid var(--ink);color:var(--ink)}
 .compact-footer .footer-note {font:italic 15px var(--book-font);text-transform:none;letter-spacing:0;color:var(--ink)}
-.compact-footer .footer-actions a,.compact-footer .footer-actions button {font:500 12px var(--ui-font);letter-spacing:0;text-transform:none;color:var(--ink)}
+.compact-footer .footer-actions a,.compact-footer .footer-actions button {font:500 15px var(--ui-font);letter-spacing:0;text-transform:none;color:var(--ink)}
 .compact-footer .footer-actions a .lucide {width:13px}
 .endnote {border-top:2px solid var(--ink)}
 .endnote h2 {font:600 clamp(46px,5vw,70px)/1.05 var(--font-serif);letter-spacing:-.05em;color:var(--ink)}
 .endnote h2 em {font-style:normal}
 .endnote-description {font:400 17px/1.5 var(--book-font);color:var(--secondary)}
-.kofi-link {border:1px solid var(--ink);background:#f3e1a0;color:var(--ink);font:500 13px var(--ui-font)}
+.kofi-link {border:1px solid var(--ink);background:#f3e1a0;color:var(--ink);font:500 16px var(--ui-font)}
 .kofi-link:hover {background:#e9d383}
 .loading-overlay {background:rgba(18,36,62,.78)}
 .loading-card {background:#f3e1a0;border:0;box-shadow:12px 12px 0 #1a3050;color:var(--ink)}
@@ -181,14 +181,14 @@ em {font-style:normal}
  .page-shell {padding:0 17px}
  .site-header {height:61px}
  .site-header .wordmark {font-size:25px;letter-spacing:-.07em}
- .site-header .header-action {font-size:12px}
+ .site-header .header-action {font-size:14px}
  .intro-stage {padding:13px 0 18px}
  .intro-grid {margin:0 -17px;padding:33px 23px 45px;border-bottom-width:7px}
  .intro-copy h1 {font-size:clamp(51px,13.4vw,68px);line-height:.99;letter-spacing:-.065em;margin:0 0 16px;max-width:530px}
  .intro-copy .hero-description {font-size:16px;line-height:1.36;margin-bottom:11px;max-width:360px}
- .hero-author-note {font-size:10px;line-height:1.4;margin:0;max-width:360px}
+ .hero-author-note {font-size:14px;line-height:1.33;margin:0;max-width:360px}
  .opening-form {margin:-13px 0 18px;box-shadow:5px 6px 0 #cbd6e1}
- .form-section-heading {padding:9px 13px 7px;gap:11px;font-size:11px}
+ .form-section-heading {padding:9px 13px 7px;gap:11px;font-size:14px}
  .form-section-heading>span:first-child {font-size:22px}
  .opening-form-body {padding:10px 14px 11px;gap:10px}
  .opening-form-intro label {font-size:clamp(25px,6.6vw,30px);line-height:1.08;letter-spacing:-.035em}
@@ -196,15 +196,15 @@ em {font-style:normal}
  .opening-control textarea {height:87px;min-height:87px;resize:none;font-size:16px;line-height:1.36;padding:7px 1px 8px;overflow-y:hidden}
  .opening-control textarea::placeholder {font-size:14px;line-height:1.36}
  .control-bottom {margin-top:5px}
- .example-button {font-size:11px;min-height:26px;padding:0 0 2px;border:0;border-radius:0;border-bottom:1px solid var(--ink)}
+ .example-button {font-size:14px;min-height:29px;padding:0 0 2px;border:0;border-radius:0;border-bottom:1px solid var(--ink)}
  .character-hint {font-size:10px}
  .form-bottom-row {padding:9px 14px 14px}
- .form-bottom-row .primary-button {width:100%;min-height:43px;font-size:12px;padding:10px 12px}
+ .form-bottom-row .primary-button {width:100%;min-height:45px;font-size:16px;padding:10px 12px}
  .conversation-stage {padding:26px 0 50px}
  .conversation-aside {padding:0 0 18px}
  .conversation-aside h2 {font-size:44px;margin:12px 0 0}
  .question-main {border:0;padding:0;min-height:unset}
- .question-topline {font-size:11px}
+ .question-topline {font-size:14px}
  .question-content {margin-top:28px}
  .question-content h2 {font-size:clamp(36px,9.2vw,48px)}
  .answer-form textarea {font-size:16px;min-height:110px}
@@ -214,7 +214,7 @@ em {font-style:normal}
  .results-subtitle {font-size:16px}
  .books-list {margin-top:0}
  .book-row,.book-row.is-featured {grid-template-columns:26px 96px minmax(0,1fr);gap:10px;padding:22px 0;min-height:0;align-items:start}
- .book-number {font-size:11px;margin-top:3px}
+ .book-number {font-size:15px;margin-top:3px}
  .book-cover,.is-featured .book-cover {width:96px;min-height:144px;max-width:96px}
  .book-cover:not(.has-cover-image) .cover-title {font-size:16px}
  .book-kicker {font-size:11px}
@@ -240,7 +240,7 @@ em {font-style:normal}
  .about-signoff {margin-top:12px;padding-top:11px}
  .compact-footer {gap:9px;padding:15px 0 17px}
  .compact-footer .footer-note {font:italic 13px var(--book-font);letter-spacing:0}
- .compact-footer .footer-actions a,.compact-footer .footer-actions button {font-size:11px}
+ .compact-footer .footer-actions a,.compact-footer .footer-actions button {font-size:14px}
 }
 @media(max-width:380px) {
  .intro-copy h1 {font-size:51px}

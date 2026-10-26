@@ -6,7 +6,7 @@ Keep the site personal and useful. The site should feel as if someone who genuin
 
 ## Visual vocabulary
 - Inky blue, crisp pale paper, warm annotation red, and a yellow reading-note panel. No cream/terracotta/forest-green gradient palette.
-- Fraunces for big, characterful display typography; Source Serif 4 for reading; IBM Plex Mono for occasional utility text. Avoid tracking every label in uppercase.
+- Fraunces for big, characterful display typography; Source Serif 4 for reading, personal notes, links and calls to action. IBM Plex Sans is reserved for functional counters. No monospace for conversational text or buttons. Avoid tracking every label in uppercase.
 - The opening is a single typographic statement. No CSS-drawn fake covers, concentric orbits, imagined publishers, badges, or generic landing-page illustration.
 - The favourites form reads like a bookshop reading slip; results use real Open Library covers when available and a quiet text fallback.
 - The reading portrait appears on a yellow reading-note surface, echoed by the downloadable image.
