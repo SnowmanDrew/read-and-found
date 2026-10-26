@@ -85,4 +85,16 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("background-attachment: local",sheet)
         self.assertIn("font-family: 'Patrick Hand'",sheet)
 
+    def test_signature_animation_and_selective_lowercase(self):
+        stamp=(ROOT/'signature-v32.css').read_text()
+        self.assertIn('signature-v32.css?v=32',html)
+        self.assertIn('app.js?v=32',html)
+        self.assertIn('class="reading-stamp"',html)
+        self.assertIn('bookshop-stamp',stamp)
+        self.assertIn('prefers-reduced-motion:reduce',stamp)
+        self.assertIn('text-transform:lowercase',stamp)
+        self.assertNotIn('.book-title {text-transform',stamp)
+        self.assertIn("stamp-revealed",js)
+        self.assertIn("requestAnimationFrame",js)
+
 if __name__=='__main__': unittest.main()

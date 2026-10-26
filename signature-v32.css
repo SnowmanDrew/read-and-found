@@ -1,0 +1,82 @@
+/* v32 — A single, tactile bookshop-stamp moment, plus selective lowercase UI.
+   Never change case on AI output, book titles, author names, or longer prose. */
+.site-header .header-action,
+.header-middle,
+.intro-copy h1,
+.form-section-heading > span:nth-child(2),
+.example-button,
+.form-bottom-row .primary-button,
+.answer-actions .primary-button,
+.answer-actions .text-button,
+.question-topline,
+.timeline-heading,
+.loading-kicker,
+.loading-title,
+.loading-detail,
+.results-lede h1,
+.results-lede .eyebrow,
+.endnote h2,
+.endnote-actions .primary-button,
+.endnote-actions .outline-button,
+.site-footer .footer-actions a,
+.site-footer .footer-actions button,
+.portrait-share-actions .primary-button,
+.portrait-share-actions .outline-button,
+.kofi-link,
+.subtle-link,
+.portrait-label { text-transform:lowercase; }
+/* Only the stamp moves when the results arrive, not five generic fading cards. */
+.results-stage .book-row {animation:none!important}
+.results-lede {position:relative;isolation:isolate;overflow:hidden;min-height:240px}
+.results-lede > div:first-child {position:relative;z-index:1}
+.reading-stamp {
+ position:absolute;z-index:2;right:clamp(27px,4vw,65px);top:50%;
+ width:194px;min-height:118px;padding:16px 15px 13px;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+ color:#efc979;border:3px solid currentColor;
+ box-shadow:inset 0 0 0 3px #172b48,inset 0 0 0 5px currentColor;
+ transform:translate3d(0,-50%,0) rotate(-9deg);opacity:0;pointer-events:none
+}
+.reading-stamp::after {content:'';position:absolute;inset:6px;border:1px dotted currentColor;opacity:.55;pointer-events:none}
+.reading-stamp .stamp-small {font:italic 15px/1.1 var(--book-font);margin:0 0 8px;letter-spacing:.01em}
+.reading-stamp .stamp-main {font:600 37px/.9 var(--font-serif);letter-spacing:-.055em;text-transform:lowercase;white-space:nowrap}
+@keyframes bookshop-stamp {
+ 0% {opacity:0;transform:translate3d(7px,-110px,0) rotate(-16deg) scale(1.42);filter:blur(1.8px)}
+ 44% {opacity:1;transform:translate3d(0,-49%,0) rotate(-7deg) scale(.92);filter:none}
+ 58% {opacity:1;transform:translate3d(0,-50%,0) rotate(-10deg) scale(1.08)}
+ 78% {opacity:1;transform:translate3d(0,-50%,0) rotate(-9deg) scale(.98)}
+ 100% {opacity:1;transform:translate3d(0,-50%,0) rotate(-9deg) scale(1)}
+}
+.results-stage.stamp-revealed .reading-stamp {animation:bookshop-stamp 820ms cubic-bezier(.19,.72,.22,1) both}
+@media(min-width:920px) {
+ .results-lede > div:first-child {max-width:calc(100% - 236px)}
+ .results-lede h1 {max-width:750px}
+}
+@media(min-width:601px) and (max-width:919px) {
+ .reading-stamp {width:150px;min-height:104px;padding:10px}
+ .reading-stamp .stamp-main {font-size:29px}
+ .reading-stamp .stamp-small {font-size:12px}
+ .results-lede > div:first-child {max-width:calc(100% - 160px)}
+}
+@media(max-width:600px) {
+ .results-lede {min-height:0;padding-bottom:102px!important}
+ .reading-stamp {
+  width:135px;min-height:80px;right:24px;top:auto;bottom:11px;padding:9px 12px 8px;
+  border-width:2px;box-shadow:inset 0 0 0 2px #172b48,inset 0 0 0 4px currentColor;transform:rotate(-8deg)
+ }
+ .reading-stamp .stamp-small {font-size:11px;margin-bottom:4px}
+ .reading-stamp .stamp-main {font-size:25px}
+ @keyframes bookshop-stamp-mobile {
+  0% {opacity:0;transform:translate3d(5px,-42px,0) rotate(-14deg) scale(1.3);filter:blur(1px)}
+  50% {opacity:1;transform:translate3d(0,2px,0) rotate(-6deg) scale(.94);filter:none}
+  70% {opacity:1;transform:rotate(-9deg) scale(1.07)}
+  100% {opacity:1;transform:rotate(-8deg) scale(1)}
+ }
+ .results-stage.stamp-revealed .reading-stamp {animation:bookshop-stamp-mobile 760ms cubic-bezier(.18,.76,.3,1) both}
+}
+@media(prefers-reduced-motion:reduce) {
+ .results-stage.stamp-revealed .reading-stamp {animation:none!important;opacity:1;transform:translate3d(0,-50%,0) rotate(-9deg)}
+}
+@media(prefers-reduced-motion:reduce) and (max-width:600px) {
+ .results-stage.stamp-revealed .reading-stamp {transform:rotate(-8deg)}
+}

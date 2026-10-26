@@ -75,7 +75,12 @@
   }
   function hideLoading() {
     stopLoadingTicker(); state.busy = false; retryAction = null;
-    $('loadingOverlay').hidden = true; document.body.style.overflow = '';
+    $('loadingOverlay').hidden = true;
+    // A real ink-stamp gesture, only when the new five-book list first appears.
+    // Swapping a recommendation does not trigger it again.
+    if (state.stage === 'results' && !stages.results.classList.contains('stamp-revealed')) {
+      requestAnimationFrame(() => stages.results.classList.add('stamp-revealed'));
+    } document.body.style.overflow = '';
   }
   function showError(message, onRetry) {
     stopLoadingTicker(); state.busy = false; retryAction = onRetry;
@@ -489,6 +494,7 @@
     recommendationEpoch++; activeSwapController?.abort(); swapQueue=[];
     state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.feedback=[]; state.sessionId='';
     $('favourites').value=''; $('characterCount').textContent='0'; $('beginButton').disabled=true;
+    stages.results.classList.remove('stamp-revealed');
     stage('intro');
   }
 

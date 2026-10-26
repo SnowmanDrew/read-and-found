@@ -23,3 +23,7 @@ Keep the site personal and useful. The site should feel as if someone who genuin
 - Check question text and portrait lengths, real-cover fallbacks, and responsive results.
 - Run `python -m unittest discover -s tests` and `node --check app.js` before merging.
 - Always change GitHub source; let Vercel deploy it. Never reconstruct HTML from an old Vercel deployment.
+
+## One signature interaction
+- When the complete list appears, a bookshop-style **for your shelves** ink stamp lands once on the results header. No other generic results fade-up; honour reduced-motion preferences.
+- Selectively lowercase site-owned headlines, labels, navigation and button copy via CSS only. Keep book titles, authors, questions, reader portraits and longer prose in normal case.
