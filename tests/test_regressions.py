@@ -156,6 +156,7 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('function renderSharedList',page)
         self.assertIn('og:image',page)
         self.assertIn('ImageResponse',image)
+        self.assertIn('api/site-og',html)
         self.assertIn('"/list/:id"',vercel)
         self.assertIn('.borrow-panel',sheet)
         self.assertIn('timingSafeEqual',proof)

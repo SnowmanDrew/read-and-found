@@ -28,6 +28,7 @@ jobs:
           node --check api/list.js
           node --check api/list-page.js
           node --check api/list-og.js
+          node --check api/site-og.js
           node --check lib/saved-list.js
           node --check lib/share-proof.js
           node --check refinements-v26.js

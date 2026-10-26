@@ -1,17 +1,41 @@
 {
   "version": 2,
   "functions": {
-    "api/read.js": {"maxDuration": 300},
-    "api/replace.js": {"maxDuration": 300},
-    "api/covers.js": {"maxDuration": 60},
-    "api/stats.js": {"maxDuration": 15},
-    "api/event.js": {"maxDuration": 15},
-    "api/out.js": {"maxDuration": 15},
-    "api/list.js": {"maxDuration": 15},
-    "api/list-page.js": {"maxDuration": 20},
-    "api/list-og.js": {"maxDuration": 30}
+    "api/read.js": {
+      "maxDuration": 300
+    },
+    "api/replace.js": {
+      "maxDuration": 300
+    },
+    "api/covers.js": {
+      "maxDuration": 60
+    },
+    "api/stats.js": {
+      "maxDuration": 15
+    },
+    "api/event.js": {
+      "maxDuration": 15
+    },
+    "api/out.js": {
+      "maxDuration": 15
+    },
+    "api/list.js": {
+      "maxDuration": 15
+    },
+    "api/list-page.js": {
+      "maxDuration": 20
+    },
+    "api/list-og.js": {
+      "maxDuration": 30
+    },
+    "api/site-og.js": {
+      "maxDuration": 30
+    }
   },
   "rewrites": [
-    {"source": "/list/:id", "destination": "/api/list-page?id=:id"}
+    {
+      "source": "/list/:id",
+      "destination": "/api/list-page?id=:id"
+    }
   ]
 }
