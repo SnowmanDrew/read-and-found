@@ -71,6 +71,11 @@ class RegressionTests(unittest.TestCase):
     def test_editorial_round_30(self):
         self.assertIn('editorial-v30.css?v=31',html)
         self.assertIn('id="loadingKicker"',html)
+        self.assertIn('class="loading-shelf"',html)
+        self.assertIn('shelf-loader-v36.css?v=36',html)
+        self.assertIn('swap-page-turn',js)
+        self.assertNotIn('loadingRule',js)
+        self.assertIn('prefers-reduced-motion', (ROOT/'shelf-loader-v36.css').read_text())
         self.assertIn('Question 1 of 3',html)
         self.assertIn('portraitStartingPoint',html)
         self.assertIn('data-feedback="yes"',html)
@@ -98,7 +103,7 @@ class RegressionTests(unittest.TestCase):
     def test_signature_animation_and_selective_lowercase(self):
         stamp=(ROOT/'signature-v32.css').read_text()
         self.assertIn('signature-v32.css?v=32',html)
-        self.assertIn('app.js?v=35',html)
+        self.assertIn('app.js?v=36',html)
         self.assertIn('class="reading-stamp"',html)
         self.assertIn('bookshop-stamp',stamp)
         self.assertIn('prefers-reduced-motion:reduce',stamp)
