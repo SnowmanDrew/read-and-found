@@ -18,9 +18,17 @@ jobs:
           python-version: '3.12'
       - name: Regression checks
         run: python tests/test_regressions.py
+      - name: Saved list security
+        run: node tests/share-proof.test.mjs
       - name: JavaScript syntax
         run: |
           node --check app.js
           node --check worker/index.js
           node --check api/_adapter.js
+          node --check api/list.js
+          node --check api/list-page.js
+          node --check api/list-og.js
+          node --check lib/saved-list.js
+          node --check lib/share-proof.js
           node --check refinements-v26.js
+
