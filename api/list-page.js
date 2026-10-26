@@ -44,7 +44,7 @@ export function renderSharedList(list,id) {
  '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">'+
  '<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="'+esc(title)+' — a reading list">'+
  '<meta name="twitter:image" content="'+website+'/api/list-og?id='+id+'">'+
- '<link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">'+
+ '<link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/site.webmanifest">'+
  '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'+
  '<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600&display=swap" rel="stylesheet">'+
  '<style>'+styles+'</style></head><body><div class="shell"><header><a class="logo" href="/">read<span>&amp;</span>found</a><a class="make" href="/">make your own list</a></header>'+
