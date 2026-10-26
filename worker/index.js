@@ -2,16 +2,18 @@ import { track, openAIUsage, reserveQuota, releaseQuota, finishQuota, stats } fr
 // Read & Found's tiny same-origin backend. Static assets are injected by scripts/build.mjs.
 // OPENAI_API_KEY is a protected Sites runtime secret, never included in this file.
 
-const SYSTEM = `You are the literary editor of Read & Found, an unusually perceptive book recommendation service. Your voice is thoughtful, candid, precise and understated, like an excellent independent bookseller. No generic flattery, no "great choices", no chatbot mannerisms, no corporate vocabulary, no therapy-speak, no purple prose. Pay close attention to why this particular reader values their favourite books, authors, or kinds of story. A reader may name only story qualities, with no specific book; treat that as a valid starting point, never invent titles they have read. Explore deeper affinities: sincerity versus irony, formal experimentation versus humane feeling, a worldview, an aesthetic, a mood, an ethical imagination. Be open to connections across genres. Crucially, distinguish actual textual or thematic connections from a vague mood association. Never fabricate a character, plot point, or thematic detail to make a connection sound convincing. Treat the reader's own words as better evidence than a theory about their tastes. Look for a compelling shared thread where there is evidence, but leave room for a second or third independent strand, or books enjoyed for entirely different reasons. Across the three questions and the final portrait, connect multiple books when there is a real connection, while allowing more than one thread. Do not let one book, one author, or the first appealing theme dominate. Don't sound like AI: prefer precise, ordinary language to balanced, over-polished or grandiose prose. Genre and normal book-to-book similarity matter too: if someone loves fantasy, mystery, romance or a particular subgenre, that is real positive evidence. Balance these recognisable affinities (genre, tone, setting, narrative structure, pace, plot ingredients) with subtler emotional, stylistic and thematic connections. Do not over-correct towards unlikely cross-genre recommendations just to be clever.`;
+const SYSTEM = `You are the literary editor of Read & Found, an unusually perceptive book recommendation service. Your voice is thoughtful, candid, precise and understated, like an excellent independent bookseller. No generic flattery, no "great choices", no chatbot mannerisms, no corporate vocabulary, no therapy-speak, no purple prose. Pay close attention to why this particular reader values their favourite books, authors, or kinds of story. A reader may name only story qualities, with no specific book; treat that as a valid starting point, never invent titles they have read. Explore deeper affinities: sincerity versus irony, formal experimentation versus humane feeling, a worldview, an aesthetic, a mood, an ethical imagination. Be open to connections across genres. Crucially, distinguish actual textual or thematic connections from a vague mood association. Never fabricate a character, plot point, or thematic detail to make a connection sound convincing. Treat the reader's own words as better evidence than a theory about their tastes. Look for a compelling shared thread where there is evidence, but leave room for a second or third independent strand, or books enjoyed for entirely different reasons. Across the three questions and the final portrait, connect multiple books when there is a real connection, while allowing more than one thread. Do not let one book, one author, or the first appealing theme dominate. Don't sound like AI: prefer precise, ordinary language to balanced, over-polished or grandiose prose. Avoid em dashes in reader-facing text, including questions, portraits and recommendations; choose ordinary punctuation. Avoid repeated formulaic either/or questions. Treat an unanswered or skipped question as missing information, never as a character trait or a topic for the portrait. Genre and normal book-to-book similarity matter too: if someone loves fantasy, mystery, romance or a particular subgenre, that is real positive evidence. Balance these recognisable affinities (genre, tone, setting, narrative structure, pace, plot ingredients) with subtler emotional, stylistic and thematic connections. Do not over-correct towards unlikely cross-genre recommendations just to be clever.`;
 const QUESTION_SCHEMA = schema('conversation', { lead: stringField(), question: stringField() });
 const BOOK_SCHEMA = schema('recommended_book', {
   title: stringField(), author: stringField(), thread: stringField(), reason: stringField(), sourceId: { type: 'integer' }
 });
+const FINAL_BOOK_SCHEMA = { ...BOOK_SCHEMA.schema, properties: { ...BOOK_SCHEMA.schema.properties, role: { type: 'string', enum: ['closest_match','tone_match','wildcard','other'] } }, required: [...BOOK_SCHEMA.schema.required, 'role'] };
 const FINAL_SCHEMA = schema('recommendations', {
   readerType: stringField(), portrait: stringField(),
   favouriteBooks: { type: 'array', items: { type: 'object', additionalProperties: false,
     properties: { title: stringField(), author: stringField() }, required: ['title','author'] } },
-  books: { type: 'array', items: BOOK_SCHEMA.schema }
+  favouriteAuthors: { type: 'array', items: { type: 'string' } },
+  books: { type: 'array', items: FINAL_BOOK_SCHEMA }
 });
 const SWAP_SCHEMA = schema('replacement', { book: BOOK_SCHEMA.schema });
 
@@ -206,7 +208,9 @@ function citedBook(item, bibliography) {
   const distinctiveWords = normaliseBook(title).split(' ').filter(word => word.length >= 4 && !['about','with','from','their','there','where','these','those'].includes(word));
   const sourceMatches = source && distinctiveWords.length && distinctiveWords.filter(word => sourceText.split(' ').includes(word)).length >= Math.ceil(distinctiveWords.length * .75);
   return { title, author: safe(item?.author, 110), thread: safe(item?.thread, 90),
-    reason: safe(item?.reason, 900), ...(sourceMatches ? { source } : {}) };
+    reason: safe(item?.reason, 900),
+    ...(['closest_match','tone_match','wildcard'].includes(item?.role) ? { role: item.role } : {}),
+    ...(sourceMatches ? { source } : {}) };
 }
 
 function numberedSources(sources) {
@@ -245,7 +249,7 @@ RESEARCH TASK — When specific books or authors are named above, confirm their 
     // Different facets, not three interrogations of the same sweeping theory.
     // A turn can follow the latest answer while still opening a new angle.
     const turnBrief = [
-      `FIRST QUESTION: Compare at least two different works, authors, or kinds of story from the user's initial favourites if two exist. Offer a tentative, *specific* shared thread if supported, or a revealing contrast. Invite the reader to correct it; do not claim it must explain everything. If they list one favourite, dig into a specific aspect rather than inventing others.`,
+      `FIRST QUESTION: If two different favourites suggest a genuine connection, you may briefly compare them, but do not force a comparison when a single precise question would be clearer. Offer a tentative, *specific* shared thread if supported, or a revealing contrast. Invite the reader to correct it; do not claim it must explain everything. If they list one favourite, dig into a specific aspect rather than inventing others.`,
       `SECOND QUESTION: Start with the reader's actual first answer. Seek either (a) another plausible connection involving different favourites or (b) a different dimension that tests or complicates the emerging thread. Keep at least TWO distinct books or kinds of story in view when possible. Do not simply move on to the next title on their list as if conducting an interview. If they reject the first thread, take that seriously and explore what differs.`,
       `THIRD QUESTION: Use the conversation as a whole: what seems to link some of the favourites, which pleasures remain distinct, and which useful uncertainty still matters? Ask a question that might refine one connection or reveal a SECOND, distinct strand. You may explore genre, humour, style, characters, mood or plot, but do not assign one question per book. Respond to what they actually said, not a prepared syllabus.`
     ][data.step];
@@ -257,9 +261,9 @@ ${turnBrief}
 
 Privately look at the actual reader's words, the earlier questions (INCLUDING their leads), and their answers. Identify (1) which preference dimensions the conversation has already tested, (2) which books/authors it has already over-focused on, and (3) one genuinely different, worthwhile curiosity. If their latest answer asks to stay with a thread, honour that; otherwise give the conversation some breadth. An interesting emerging commonality is a lead to explore, not a finding to keep reasserting. Prefer a question that distinguishes between plausible explanations, reveals a second thread, or compares a different pairing of their favourites. Avoid mechanically asking about each book or author in turn. Do not use the same named work as the anchor across all three questions if the reader mentioned several. Avoid rotating through favourites one by one; seek relationships between examples where justified. Different books may satisfy different needs, with no unifying explanation. Do not infer feelings merely from a title. Ordinary genre, escapism, plot and fun deserve as much attention as style or philosophy.
 
-Write one brief, natural conversational response with an OPTIONAL lead and exactly one question. Keep it lively: it is a conversation about their reading taste, not three isolated book interviews. In the lead, if used, make ONE specific, falsifiable observation grounded in their words rather than a theory about who they fundamentally are. Never spend half a paragraph proving two unrelated authors are secretly alike. Don't present a multiple-choice test, flatter their taste, make elaborate academic comparisons, or repeatedly ask whether two books 'scratch the same itch'. Permit an answer such as 'I just enjoy them for different reasons'.
+Write one brief, natural conversational response with an OPTIONAL lead and exactly one question. Vary structure across the three turns: sometimes a direct question, sometimes a brief concrete comparison, sometimes a question about tone or pacing. Do NOT chain together multiple alternatives or three choices in one sentence; never frame all three questions as an either/or. No em dashes, and avoid repeatedly saying 'that pleasure' or 'that tension'. Keep it lively: it is a conversation about their reading taste, not three isolated book interviews. In the lead, if used, make ONE specific, falsifiable observation grounded in their words rather than a theory about who they fundamentally are. Never spend half a paragraph proving two unrelated authors are secretly alike. Don't present a multiple-choice test, flatter their taste, make elaborate academic comparisons, or repeatedly ask whether two books 'scratch the same itch'. Permit an answer such as 'I just enjoy them for different reasons'.
 
-The lead should normally be one complete sentence, up to 30 words (maximum 55). The question should be complete, direct and preferably 12–32 words (maximum 65). A short lead plus a short question is better than a literary essay. Do not leave any sentence unfinished or break off mid-word. No markdown emphasis (asterisks), jargon, therapy language, generic chatbot encouragement or sweeping claims. Return just the two JSON fields; keep the response human, curious and varied.`;
+The lead should normally be one complete sentence, up to 22 words (maximum 40). The question should be complete, direct and preferably 10–22 words (maximum 45). A short lead plus a short question is better than a literary essay. Do not leave any sentence unfinished or break off mid-word. No markdown emphasis (asterisks), jargon, therapy language, generic chatbot encouragement or sweeping claims. Return just the two JSON fields; keep the response human, curious and varied.`;
     for (let attempt = 0; attempt < 2; attempt++) {
       try {
         const result = await askStructured(env, instruction, QUESTION_SCHEMA, { outputTokens: 1100, budgetMs: 49000, effort: 'medium' });
@@ -277,6 +281,8 @@ The lead should normally be one complete sentence, up to 30 words (maximum 55). 
   const discussedQuestions = data.history.map(item => item.question).join('\n').toLowerCase();
   const searchPrompt = `${context}${grounding}
 
+IMPORTANT NEGATIVE PREFERENCES: If the reader rejects a genre, tone or level of darkness (for example 'no thrillers', 'nothing too dark', 'not horror'), obey that preference even if their other favourites have dark elements. Do not interpret 'mystery' as a request for murder, horror or psychological thrillers. If they like literary fiction, include genuine literary candidates with a compatible mood, not only genre crossovers.
+
 RESEARCH TASK — Search across literary criticism, library catalogues, publisher pages and author interviews for published books that could suit the PRECISE preferences this person expressed, using BOTH the genres, subgenres, settings, storytelling pleasures and familiar features they enjoy AND the deeper preferences expressed in their answers. Look up the titles and authors in the conversation so you understand their real work. Then research about 10–12 NEW, specific published books by different authors. Include a substantial set of recognisably close matches (genre, tone, pace, premise or form, supported by evidence) and several more adventurous cross-genre connections. A good discovery can still be in the same genre; do not prize unexpectedness for its own sake. Never include books/authors already named by the reader, or titles raised in our questions. For each new book give: exact title and author, a verified specific detail (structure, character, premise, prose, themes), and an honest sentence about a possible affinity or meaningful contrast to something this reader ACTUALLY SAID. Cite book-specific sources, ideally publishers, library catalogues or substantive reviews. Do not guess at plots or make up titles. Give a concise researched longlist in plain text, not JSON.`;
   const discovery = await researchBooks(env, searchPrompt, { outputTokens: 4000, budgetMs: 73000 });
   const bibliography = discovery.sources;
@@ -289,7 +295,9 @@ ${discovery.notes}
 RESEARCH SOURCES (numbered; use sourceId from this list only when the source genuinely discusses your selected book):
 ${numberedSources(bibliography)}
 
-This is an open-ended, freshly researched longlist, NOT a pre-curated catalogue. Scrutinise title/author pairs and factual descriptions. If a researched candidate is shaky, discard it. Select exactly FIVE real, correctly attributed published books by five different authors from the researched options. Do not include books or authors already mentioned by the reader, or titles raised earlier in our conversation. Do not force all their favourites into one grand theory. Consider BOTH why they read and what kinds of books they enjoy. Genre similarity is a legitimate reason to recommend something, especially when supported by a second, more specific affinity; it is not automatically superficial. Prioritise their own answers when they clarify or contradict the opening list. As a default, aim for roughly two or three recommendations with recognisable genre/subgenre, premise, tonal or structural affinities, and two or three more lateral discoveries. Adapt this balance to the actual reader: if they mostly describe a genre they love, give them more within it; if they explicitly want to branch out, follow that. Never make the set feel random just to appear original.
+This is an open-ended, freshly researched longlist, NOT a pre-curated catalogue. Scrutinise title/author pairs and factual descriptions. If a researched candidate is shaky, discard it. Select exactly FIVE real, correctly attributed published books by five different authors from the researched options. Do not include books or authors already mentioned by the reader, or titles raised earlier in our conversation. Do not force all their favourites into one grand theory. Consider BOTH why they read and what kinds of books they enjoy. Genre similarity is a legitimate reason to recommend something, especially when supported by a second, more specific affinity; it is not automatically superficial. Prioritise their own answers when they clarify or contradict the opening list. EXPLICIT AVOIDANCES ARE BOUNDARIES: if they said no thriller, do not include thrillers or books primarily sold as psychological horror; if they want something quiet, include genuinely quiet books rather than only dark mystery-adjacent works. Never treat a skipped question, '(skipped)', or an inability to choose as a preference; do not mention unanswered questions in the portrait or recommendations. As a default, aim for roughly two or three recommendations with recognisable genre/subgenre, premise, tonal or structural affinities, and two or three more lateral discoveries. Adapt this balance to the actual reader: if they mostly describe a genre they love, give them more within it; if they explicitly want to branch out, follow that. Never make the set feel random just to appear original.
+
+FAVOURITE AUTHORS: In "favouriteAuthors" return the names of authors the reader explicitly says they enjoy, including a named author without a specific favourite title. Only include names they actually wrote; never infer an author from a researched book or earlier question. Return [] if none. The display will show these as names rather than inventing a cover.
 
 FAVOURITE BOOK COVERS: Include in "favouriteBooks" up to SIX distinct real book titles that the reader personally named as a book they loved or liked, in the initial favourites or their answers. Give the correct title and author. A mentioned author by itself does NOT count as a named book. Do NOT infer a book from an author name, research note, or one of your recommendations, and do NOT include a book the reader explicitly disliked. If they named no actual liked book titles, return an empty array. We will use this list to illustrate their personal portrait, not to decide what to sell.
 
@@ -297,9 +305,9 @@ THE READER PORTRAIT: First rule: "Don't sound like AI." Write the sort of succin
 
 Create an original 2–5 word "readerType" heading that fits the evidence but isn't a fanciful personality-test classification. It can be modest, wry or descriptive, not necessarily "The [Adjective] [Noun]"; don't promise to reveal 'who they truly are'. Write "portrait" in 50–75 words of lucid, natural second-person prose, in two or three sentences. Variety is welcome; an honest contrast between distinct reading moods is better than a forced synthesis. Allow specificity, gentle humour and an affectionate observation, but never an invented personal anecdote.
 
-Avoid common AI-tells: 'you are the kind of reader who', 'at heart', 'what unites them all', 'whether X or Y', 'not just X but Y', 'your reading DNA', 'you gravitate towards', 'tapestry', 'resonates', 'there is something about', symmetrical abstractions, and generic claims about wanting stories that 'make you think and feel'. Don't repeatedly use the same sentence structure. Don't use vague pseudo-profound aphorisms. No markdown formatting. Write as an editor would, not a personality quiz, horoscope, therapist or promotional chatbot.
+Avoid common AI-tells: 'you are the kind of reader who', 'at heart', 'what unites them all', 'whether X or Y', 'not just X but Y', 'your reading DNA', 'you gravitate towards', 'tapestry', 'resonates', 'there is something about', symmetrical abstractions, and generic claims about wanting stories that 'make you think and feel'. Don't repeatedly use the same sentence structure. Don't use vague pseudo-profound aphorisms. Never mention skipped questions, unanswered prompts, the interview process, or the algorithm in the portrait. If the reader did not answer a question, simply work with what they did tell you. No em dashes. No markdown formatting. Write as an editor would, not a personality quiz, horoscope, therapist or promotional chatbot.
 
-THE FIVE RECOMMENDATIONS: Across the set of five, draw on DIFFERENT strands of the reader's stated preferences, rather than attaching all five to the same supposed hidden motivation. Distinguish genre/subgenre and storytelling pleasures from voice, craft, mood, character, etc. Don't rely on whatever topic the last question happened to explore. For each selected book, write a "reason" of 40–60 words that feels like a bookseller telling a friend why this one is worth trying. Start with one concrete and accurate detail about the book *supported by your research*, then explain why one specific thing they said points towards it. Make five genuinely different cases rather than recycling an idea across all five. Avoid meta-analysis of the reader, such as "your preference for character tension gives this similarity weight". Be warm, accurate and concise. If a book contains disturbing themes relevant to informed choice, retain a brief considerate content note. When a recommendation is close in genre, subgenre, atmosphere or narrative mechanics, say so plainly and explain the additional specific link. A connection can be imperfect or a small leap; be honest about that. Never invent a plot event, assume the reader has experienced something personally, spoil an ending, or imply that two books are similar just because they share a genre or theme. Avoid stock phrases like "perfect for you", "you'll love", "resonates with", "masterful" and "must-read". Give each book a short "thread" of 2–5 original words, like a small editorial note. For each book set "sourceId" to its matching number in the RESEARCH SOURCES list; use 0 when no source specifically describes that book.
+THE FIVE RECOMMENDATIONS: Choose a clear mix of discovery roles. Mark ONE book as role 'closest_match' for the most grounded fit with their favourite books, ONE as 'tone_match' for a book especially close to their stated mood, and ONE as 'wildcard' for a plausible but genuinely different discovery. The other TWO use role 'other'. These roles must be honest, never an excuse to violate a stated dislike. A wildcard is NOT permission to recommend a thriller to someone who explicitly does not want one. Return this role field on each book. Do not mention these role codes in the prose. Across the set of five, draw on DIFFERENT strands of the reader's stated preferences, rather than attaching all five to the same supposed hidden motivation. Distinguish genre/subgenre and storytelling pleasures from voice, craft, mood, character, etc. Don't rely on whatever topic the last question happened to explore. For each selected book, write a "reason" of 40–60 words that feels like a bookseller telling a friend why this one is worth trying. Start with one concrete and accurate detail about the book *supported by your research*, then explain why one specific thing they said points towards it. Make five genuinely different cases rather than recycling an idea across all five. Avoid meta-analysis of the reader, such as "your preference for character tension gives this similarity weight". Be warm, accurate and concise. If a book contains disturbing themes relevant to informed choice, retain a brief considerate content note. When a recommendation is close in genre, subgenre, atmosphere or narrative mechanics, say so plainly and explain the additional specific link. A connection can be imperfect or a small leap; be honest about that. Never invent a plot event, assume the reader has experienced something personally, spoil an ending, or imply that two books are similar just because they share a genre or theme. Avoid stock phrases like "perfect for you", "you'll love", "resonates with", "masterful" and "must-read". Give each book a short "thread" of 2–5 original words, like a small editorial note. Avoid em dashes in all reader-facing text. For each book set "sourceId" to its matching number in the RESEARCH SOURCES list; use 0 when no source specifically describes that book.
 
 Write the portrait and five book selections as structured JSON.`;
   const result = await askStructured(env, editorial, FINAL_SCHEMA, { editor: true, outputTokens: 5200, budgetMs: 85000, effort: 'medium' });
@@ -324,7 +332,12 @@ Write the portrait and five book selections as structured JSON.`;
     .filter(item=>item.title.length>2 && item.author.length>2 && wordsSaid.includes(normaliseBook(item.title)))
     .filter((item,i,arr)=>arr.findIndex(other=>normaliseBook(other.title)===normaliseBook(item.title))===i)
     .slice(0,6);
-  return { readerType, portrait, favouriteBooks, books, researchSources: bibliography.slice(0,12) };
+  const favouriteAuthors = (Array.isArray(result.favouriteAuthors) ? result.favouriteAuthors : [])
+    .map(name => safe(name,100))
+    .filter(name => name.length > 3 && wordsSaid.includes(normaliseBook(name)))
+    .filter((name,i,all)=>all.findIndex(other=>normaliseBook(other)===normaliseBook(name))===i)
+    .slice(0,8);
+  return { readerType, portrait, favouriteBooks, favouriteAuthors, books, researchSources: bibliography.slice(0,12) };
 }
 
 async function handleApi(request, env) {
@@ -449,62 +462,99 @@ async function handleCovers(request) {
   let books;
   try {
     const body = await request.json();
-    if (!Array.isArray(body.books) || body.books.length < 1 || body.books.length > 8) throw new Error('invalid');
+    if (!Array.isArray(body.books) || !body.books.length || body.books.length > 8) throw new Error('invalid');
     books = body.books.map(book => ({ title: safe(book?.title, 150), author: safe(book?.author, 110) }));
     if (books.some(book => !book.title || !book.author)) throw new Error('invalid');
   } catch (_) { return error('Invalid book list.', 400); }
 
-  // This lookup sends ONLY public book titles and authors to Open Library,
-  // never the reader's favourites, answers, or language-model conversation.
-  const quoted = value => value.replace(/[\\"]/g, '\\$&');
-  const q = books.map(book => `(title:"${quoted(book.title)}" AND author:"${quoted(book.author)}")`).join(' OR ');
-  const url = 'https://openlibrary.org/search.json?' + new URLSearchParams({
-    q, fields: 'key,title,author_name,cover_i,isbn', limit: '60'
-  });
+  // One catalogue search PER book. The old combined OR search returned 60
+  // results across every title, then required exact author/title and complete
+  // edition-language metadata. Real books often fell through those conditions.
+  // Send only public titles and authors to Open Library, never private answers.
+  const validISBN13 = value => /^97[89]\d{10}$/.test(value) &&
+    [...value].reduce((sum,char,i)=>sum + Number(char)*(i%2 ? 3 : 1),0) % 10 === 0;
+  const coverId = edition => (Array.isArray(edition?.covers) ? edition.covers : [])
+    .find(id => Number.isSafeInteger(id) && id > 0);
+  const english = edition => edition.languages?.some(lang => lang?.key === '/languages/eng');
+  const unlabelledEnglishTitle = (edition,book) =>
+    (!Array.isArray(edition.languages) || edition.languages.length === 0) &&
+    normaliseBook(edition.title || '') === normaliseBook(book.title);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 19000);
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'Read & Found reading discovery prototype' }
+  const timeout = setTimeout(() => controller.abort(), 24000);
+  async function catalogue(url) {
+    const response = await fetch(url,{signal:controller.signal,headers:{
+      'User-Agent':'ReadAndFound/1.0 (book discovery; metadata only)',
+      'Accept':'application/json'
+    }});
+    if (!response.ok) throw new Error('catalogue_'+response.status);
+    return response.json();
+  }
+  async function oneCover(book) {
+    const query = new URLSearchParams({
+      title:book.title, author:book.author,
+      fields:'key,title,author_name,edition_count',limit:'16'
     });
-    if (!response.ok) throw new Error('catalogue_unavailable');
-    const docs = (await response.json()).docs || [];
-    const validISBN13 = value => /^97[89]\d{10}$/.test(value) && [...value].reduce((sum,char,i)=>sum + Number(char)*(i%2 ? 3 : 1),0) % 10 === 0;
-    const covers = await Promise.all(books.map(async book => {
-      const work = docs.find(entry =>
-        normaliseBook(entry.title || '') === normaliseBook(book.title) &&
-        Array.isArray(entry.author_name) && entry.author_name.some(name =>
-          normaliseBook(name) === normaliseBook(book.author)
-        ) && /^\/works\/OL\d+W$/.test(entry.key || '')
-      );
-      if (!work) return null;
-      // A work's default cover can depict a translation. Pick a documented English edition instead.
-      try {
-        const response = await fetch('https://openlibrary.org'+work.key+'/editions.json?limit=100', {
-          signal: controller.signal,
-          headers: { 'User-Agent': 'Read & Found reading discovery prototype' }
-        });
-        if (!response.ok) return null;
-        const editions = (await response.json()).entries || [];
-        const english = editions.filter(item =>
-          Array.isArray(item.languages) && item.languages.some(lang => lang?.key === '/languages/eng') &&
-          Array.isArray(item.covers) && item.covers.some(id => Number.isSafeInteger(id) && id > 0)
-        );
-        const edition = english.find(item => (item.isbn_13 || []).some(validISBN13)) || english[0];
-        if (!edition) return null;
-        const coverId = edition.covers.find(id => Number.isSafeInteger(id) && id > 0);
+    const search = await catalogue('https://openlibrary.org/search.json?'+query);
+    const title = normaliseBook(book.title),author=normaliseBook(book.author);
+    const works = (search.docs || []).filter(item =>
+      /^\/works\/OL\d+W$/.test(item.key || '') &&
+      (normaliseBook(item.title || '') === title ||
+       normaliseBook(item.title || '').startsWith(title+' ')) &&
+      (item.author_name || []).some(name => {
+        const n=normaliseBook(name);
+        return n === author || n.endsWith(' '+author) || author.endsWith(' '+n);
+      })
+    ).slice(0,2);
+    for (const work of works) {
+      let unlabelled = null;
+      // Old code inspected just the first page, even for heavily translated works.
+      for (let offset=0;offset<=100;offset+=100) {
+        const data = await catalogue('https://openlibrary.org'+work.key+'/editions.json?'+
+          new URLSearchParams({limit:'100',offset:String(offset)}));
+        const editions = (data.entries || []).filter(item => !!coverId(item));
+        const confirmed = editions.filter(english);
+        const fallback = editions.filter(item => unlabelledEnglishTitle(item,book));
+        const picked = confirmed.find(item => (item.isbn_13 || []).some(validISBN13)) ||
+          confirmed[0];
+        if (picked) {
+          const id=coverId(picked);
+          return {
+            coverUrl:'https://covers.openlibrary.org/b/id/'+id+'-L.jpg?default=false',
+            isbn13:(picked.isbn_13 || []).find(validISBN13) || null,
+            openLibraryUrl:'https://openlibrary.org'+work.key
+          };
+        }
+        if (!unlabelled && fallback.length) unlabelled =
+          fallback.find(item => (item.isbn_13 || []).some(validISBN13)) || fallback[0];
+        if ((data.size || 0) <= offset+100) break;
+      }
+      // Some original English editions omit the languages field entirely.
+      // An exact original-language title is safer than an unrelated work cover.
+      if (unlabelled) {
         return {
-          coverUrl: 'https://covers.openlibrary.org/b/id/'+coverId+'-L.jpg?default=false',
-          isbn13: (edition.isbn_13 || []).find(validISBN13) || null,
-          openLibraryUrl: 'https://openlibrary.org'+work.key
+          coverUrl:'https://covers.openlibrary.org/b/id/'+coverId(unlabelled)+'-L.jpg?default=false',
+          isbn13:(unlabelled.isbn_13 || []).find(validISBN13) || null,
+          openLibraryUrl:'https://openlibrary.org'+work.key
         };
-      } catch (_) { return null; }
+      }
+    }
+    return null;
+  }
+  try {
+    const covers = Array(books.length).fill(null);
+    let cursor=0;
+    // Keep concurrency modest to avoid Open Library's public API rate limits.
+    await Promise.all(Array.from({length:Math.min(2,books.length)},async()=>{
+      while(cursor < books.length) {
+        const i=cursor++;
+        try { covers[i]=await oneCover(books[i]); }
+        catch (_) { covers[i]=null; }
+      }
     }));
-    return json({ covers });
+    return json({covers});
   } catch (err) {
-    console.warn('Optional Open Library cover lookup unavailable:', err.name || 'error');
-    return json({ covers: books.map(() => null) });
+    console.warn('Optional Open Library cover lookup unavailable:',err.name||'error');
+    return json({covers:books.map(()=>null)});
   } finally { clearTimeout(timeout); }
 }
 
