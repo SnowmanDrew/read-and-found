@@ -536,6 +536,11 @@
           const oldRow = $('booksList').querySelector(`[data-book-index="${job.index}"]`);
           if (!oldRow) continue;
           state.books[job.index] = book;
+          // A saved link describes the old list. After a swap, let the reader
+          // deliberately save a new immutable link for the updated choices.
+          state.sharedListUrl = '';
+          $('savedListStatus').hidden = true;
+          $('saveShareText').textContent = 'save & share this list';
           const newRow = createBookRow(book,job.index);
           newRow.classList.add('is-new-pick'); newRow.style.animationDelay = '0ms';
           oldRow.replaceWith(newRow);
