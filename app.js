@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
+  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', shareProof: '', sharedListUrl: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
   const stages = { intro: $('introStage'), conversation: $('conversationStage'), results: $('resultsStage') };
   let loadingTicker = null;
   let retryAction = null;
@@ -318,6 +318,8 @@
     starting.textContent = 'You started with: ' + snippet(state.favourites,250);
     starting.hidden = !state.favourites;
     $('feedbackThanks').hidden = true;
+    $('savedListStatus').hidden = true;
+    $('saveShareText').textContent = 'save & share this list';
     $('resultsFeedback').querySelectorAll('button').forEach(button=>button.disabled=false);
     stage('results'); icons(); hydrateCovers(); hydrateFavouriteCovers();
   }
@@ -575,6 +577,7 @@
       } else {
         if (!Array.isArray(result.books) || result.books.length !== 5 || !result.readerType || !result.portrait) throw new Error('The recommendations were incomplete. Try again.');
         state.answers.push(pending); state.books = result.books; state.readerType = result.readerType; state.portrait = result.portrait;
+        state.shareProof = result.shareProof || ''; state.sharedListUrl = '';
         state.favouriteBooks = Array.isArray(result.favouriteBooks) ? result.favouriteBooks.slice(0,6) : [];
         state.favouriteAuthors = Array.isArray(result.favouriteAuthors) ? result.favouriteAuthors.slice(0,8) : [];
         state.researchSources = Array.isArray(result.researchSources) ? result.researchSources : [];
@@ -587,10 +590,47 @@
     if (state.busy) return;
     coverLookupVersion++; favouriteCoverLookupVersion++;
     recommendationEpoch++; activeSwapController?.abort(); swapQueue=[];
-    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.favouriteAuthors=[]; state.feedback=[]; state.sessionId='';
+    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.favouriteAuthors=[]; state.shareProof=''; state.sharedListUrl=''; state.feedback=[]; state.sessionId='';
     $('favourites').value=''; $('characterCount').textContent='0'; $('beginButton').disabled=true;
     stages.results.classList.remove('stamp-revealed');
     stage('intro');
+  }
+
+  async function saveOrCopyList() {
+    const button = $('saveShareList');
+    if (state.sharedListUrl) {
+      try { await navigator.clipboard.writeText(state.sharedListUrl); toast('Share link copied.'); }
+      catch (_) { toast('Your share link is shown below.'); }
+      return;
+    }
+    if (!state.shareProof) return toast('Finish a new reading list before saving it.');
+    button.disabled = true; $('saveShareText').textContent = 'saving your list…';
+    try {
+      // Opt-in storage: the questions and raw reader answers are NOT saved.
+      const payload = {
+        sessionId:state.sessionId, proof:state.shareProof,
+        readerType:state.readerType, portrait:state.portrait,
+        favouriteBooks:state.favouriteBooks.map(({title,author,coverUrl})=>({title,author,coverUrl})),
+        favouriteAuthors:state.favouriteAuthors,
+        books:state.books.map(({title,author,reason,thread,role,contentNote,year,pages,series,isbn13,coverUrl})=>
+          ({title,author,reason,thread,role,contentNote,year,pages,series,isbn13,coverUrl}))
+      };
+      const response = await fetch('/api/list',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+      });
+      const data = await response.json();
+      if (!response.ok || !data.url) throw Error(data.error || 'Unable to save this list.');
+      state.sharedListUrl = data.url;
+      $('savedListLink').href = data.url;
+      $('savedListLink').textContent = data.url;
+      $('savedListStatus').hidden = false;
+      $('saveShareText').textContent = 'copy share link';
+      try { await navigator.clipboard.writeText(data.url); toast('List saved and share link copied.'); }
+      catch (_) { toast('List saved. Your link is shown below.'); }
+    } catch (error) {
+      $('saveShareText').textContent = 'save & share this list';
+      toast(error.message || 'Unable to save this list.');
+    } finally { button.disabled = false; }
   }
 
   async function copyList() {
@@ -733,6 +773,7 @@
   $('restartFromJourney').addEventListener('click',reset);
   $('startAgain').addEventListener('click',reset);
   $('copyList').addEventListener('click',copyList);
+  $('saveShareList').addEventListener('click',saveOrCopyList);
   $('resultsFeedback').querySelectorAll('[data-feedback]').forEach(button=>button.addEventListener('click',()=>{
     const vote=button.dataset.feedback==='yes'?'list_helpful':'list_not_helpful';
     try{navigator.sendBeacon('/api/event',new Blob([JSON.stringify({event:vote})],{type:'text/plain'}));}catch(_){}
