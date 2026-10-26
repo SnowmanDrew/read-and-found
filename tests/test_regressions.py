@@ -98,7 +98,7 @@ class RegressionTests(unittest.TestCase):
     def test_signature_animation_and_selective_lowercase(self):
         stamp=(ROOT/'signature-v32.css').read_text()
         self.assertIn('signature-v32.css?v=32',html)
-        self.assertIn('app.js?v=34',html)
+        self.assertIn('app.js?v=35',html)
         self.assertIn('class="reading-stamp"',html)
         self.assertIn('bookshop-stamp',stamp)
         self.assertIn('prefers-reduced-motion:reduce',stamp)
@@ -129,6 +129,17 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('openlibrary.org/search.json',worker)
         self.assertIn('portrait-book-cover img',polish)
 
+    def test_swap_book_metadata_and_reading_trail(self):
+        self.assertIn('if (!item) return;',js)
+        self.assertIn("metadataFallback",worker)
+        self.assertIn("renderReadTrail()",js)
+        self.assertIn('alreadyReadTrail',html)
+        self.assertIn('readTrail.push',js)
+        self.assertIn("book.role = 'fresh_pick'",js)
+        self.assertIn('book-media',js)
+        self.assertIn('book-actions',js)
+        self.assertIn('sticker-wildcard', (ROOT/'reading-list-v34.css').read_text())
+
     def test_saved_lists_and_borrowing(self):
         page=(ROOT/'api/list-page.js').read_text()
         image=(ROOT/'api/list-og.js').read_text()
@@ -137,7 +148,7 @@ class RegressionTests(unittest.TestCase):
         list_api=(ROOT/'api/list.js').read_text()
         vercel=(ROOT/'vercel.json').read_text()
         sheet=(ROOT/'reading-list-v34.css').read_text()
-        self.assertIn('reading-list-v34.css?v=34',html)
+        self.assertIn('reading-list-v34.css?v=35',html)
         self.assertIn('saveShareList',html)
         self.assertIn('savedListStatus',html)
         self.assertIn('privacy-line',html)
