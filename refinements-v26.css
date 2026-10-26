@@ -1,0 +1,34 @@
+
+.wordmark .wordmark-amp{margin-left:0;margin-right:0}
+.intro-copy h1{margin-top:12px}
+.compact-footer{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.compact-footer .footer-note{color:#8b998b}
+.compact-footer .footer-actions{display:flex;align-items:center;gap:26px}
+.compact-footer .footer-actions a,.compact-footer .footer-actions button{white-space:nowrap}
+@media(max-width:600px){
+ .intro-copy h1{margin-top:12px;margin-bottom:10px}
+ .form-section-heading .step-count{display:none}
+ .opening-form-body{padding:13px 14px 10px;gap:10px}
+ .opening-form-intro label{font-size:clamp(25px,6.8vw,29px);line-height:1.09}
+ .opening-control textarea{min-height:90px;height:90px;overflow-y:hidden;resize:none;padding:10px 12px;font-size:16px;line-height:1.35}
+ .opening-control textarea::placeholder{font-size:15px;line-height:1.35}
+ .control-bottom{margin-top:6px;align-items:center}
+ .example-button{display:inline-flex;align-items:center;gap:6px;min-height:33px;font-size:11px;line-height:1.2;border:1px solid #cbd4ca;border-radius:999px;padding:6px 11px;text-decoration:none;background:rgba(248,249,243,.75)}
+ .example-button:hover{background:#e9eee6}
+ .form-bottom-row{padding:10px 14px 12px}
+ .compact-footer{display:flex;flex-direction:column;align-items:stretch;gap:11px;padding-top:18px;padding-bottom:21px}
+ .compact-footer .footer-note{display:block;font-size:9px;letter-spacing:.135em}
+ .compact-footer .footer-actions{display:flex;justify-content:space-between;align-items:center;gap:12px}
+ .compact-footer .footer-actions a,.compact-footer .footer-actions button{font-size:9px}
+ .compact-footer .footer-actions button{margin-left:0}
+ .settings-inner{padding:22px 22px 26px}
+ .settings-top{margin-bottom:8px}
+ .settings-top .eyebrow{font-size:10px}
+ .settings-icon{font-size:23px;margin-top:8px}
+ .settings-inner h2{font-size:clamp(43px,11.7vw,54px);line-height:1.02;margin:9px 0 17px}
+ .settings-inner>p{font-size:14px;line-height:1.53;margin:0 0 13px}
+ .settings-inner .close-dialog{width:42px;height:42px}
+ .about-signoff{margin-top:18px;padding-top:16px}
+}
+@media(max-width:380px){.compact-footer .footer-actions a,.compact-footer .footer-actions button{font-size:8px}}
+@media(max-width:600px) and (max-height:720px){.opening-control textarea{min-height:80px;height:80px}}
