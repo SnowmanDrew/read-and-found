@@ -107,6 +107,13 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("stamp-revealed",js)
         self.assertIn("requestAnimationFrame",js)
 
+    def test_shared_cover_request_pipeline(self):
+        self.assertIn('function requestCoverData(books)',js)
+        self.assertIn('let coverRequestQueue = Promise.resolve()',js)
+        self.assertEqual(js.count("fetch('/api/covers'"),1)
+        self.assertEqual(js.count('await requestCoverData(books)'),2)
+        self.assertIn('carefully inventory EVERY explicitly named liked book',worker)
+
     def test_polish_round_33(self):
         polish=(ROOT/'polish-v33.css').read_text()
         self.assertIn('polish-v33.css?v=33',html)

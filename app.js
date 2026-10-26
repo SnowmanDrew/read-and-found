@@ -16,6 +16,9 @@
   let swapWorkerRunning = false;
   let activeSwapController = null;
   let favouriteCoverLookupVersion = 0;
+  // Serialise recommendation and portrait cover batches so their Open Library
+  // requests do not compete with one another or trip its rate limits.
+  let coverRequestQueue = Promise.resolve();
 
   const verdicts = [
     { id: 'loved', label: 'Loved it' },
@@ -298,21 +301,36 @@
     cover.appendChild(image); image.src = item.coverUrl;
   }
 
+  function requestCoverData(books) {
+    if (!books.length) return Promise.resolve([]);
+    const lookup = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      try {
+        const response = await fetch('/api/covers', {
+          method:'POST', signal:controller.signal,
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({books:books.map(({title,author})=>({title,author}))})
+        });
+        if (!response.ok) return books.map(() => null);
+        const data = await response.json();
+        return Array.isArray(data.covers) ? data.covers : books.map(() => null);
+      } catch (_) {
+        return books.map(() => null);
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+    // Keep the queue alive even if a prior cover lookup fails.
+    const result = coverRequestQueue.then(lookup,lookup);
+    coverRequestQueue = result.then(() => undefined,() => undefined);
+    return result;
+  }
+
   async function lookupCovers(books,indexOffset,version) {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 28000);
-    try {
-      const response = await fetch('/api/covers', {
-        method: 'POST', signal: controller.signal,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ books: books.map(({title,author}) => ({ title, author })) })
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      if (!Array.isArray(data.covers)) return;
-      data.covers.forEach((item,i) => attachCover(item,indexOffset+i,books[i],version));
-    } catch (_) { /* The typographic fallback stays in place. */ }
-    finally { clearTimeout(timeout); }
+    const covers = await requestCoverData(books);
+    if (version !== coverLookupVersion || state.stage !== 'results') return;
+    covers.forEach((item,i) => attachCover(item,indexOffset+i,books[i],version));
   }
 
   function hydrateCovers() {
@@ -355,14 +373,10 @@
       item.append(cover,caption); shelf.append(item); return cover;
     });
     try {
-      const response = await fetch('/api/covers', {
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({books:books.map(({title,author})=>({title,author}))})
-      });
-      if (!response.ok || version !== favouriteCoverLookupVersion) return;
-      const result = await response.json();
-      if (!Array.isArray(result.covers) || version !== favouriteCoverLookupVersion) return;
-      result.covers.forEach((cover,index) => {
+      // Same endpoint, request format and timeout as recommendation covers.
+      const covers = await requestCoverData(books);
+      if (version !== favouriteCoverLookupVersion || state.stage !== 'results') return;
+      covers.forEach((cover,index) => {
         const url = cover?.coverUrl;
         if (!/^https:\/\/covers\.openlibrary\.org\/b\/id\/\d+-L\.jpg\?default=false$/.test(url || '')) return;
         // Ordinary on-page images do not require CORS. The shared PNG uses a
