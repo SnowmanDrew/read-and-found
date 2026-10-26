@@ -35,8 +35,12 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('resizeFavourites()', (ROOT/'refinements-v26.js').read_text())
     def test_brand_favicon(self):
         favicon=(ROOT/'favicon.svg').read_text()
-        self.assertIn('favicon.svg?v=2',html)
-        for colour in ('#1c304c','#f5f6f4','#c34b36'):
+        self.assertIn('favicon.svg?v=3',html)
+        self.assertIn('apple-touch-icon.png',html)
+        self.assertIn('site.webmanifest',html)
+        for path in ('favicon.ico','apple-touch-icon.png','icon-192.png','icon-512.png'):
+            self.assertTrue((ROOT/path).exists())
+        for colour in ('#1c304c','#f6f1e4','#e8b84f'):
             self.assertIn(colour,favicon)
         self.assertIn('viewBox="0 0 64 64"',favicon)
         self.assertNotIn('font-family',favicon)
@@ -46,6 +50,10 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('for good, not evil (or profit)',html)
         self.assertIn('estimated to consume less water',html)
         self.assertIn("Hey, we're Drew and Hannah",html)
+        self.assertIn("Tell us what you loved reading. We’ll ask",html)
+        self.assertIn("Let us know how you get on.",html)
+        self.assertNotIn("privacy-line",html)
+        self.assertNotIn("privacy-details",html)
         self.assertNotIn("Drew Timms",html)
         self.assertIn('bookshop notebook',theme)
         self.assertIn('.book-cover.has-real-cover',theme)
@@ -157,7 +165,7 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('reading-list-v34.css?v=35',html)
         self.assertIn('saveShareList',html)
         self.assertIn('savedListStatus',html)
-        self.assertIn('privacy-line',html)
+        self.assertNotIn('privacy-line',html)
         self.assertIn('saveOrCopyList()',js)
         self.assertIn('makeBorrowPanel(book)',js)
         self.assertIn('detailsForBook(book)',js)
