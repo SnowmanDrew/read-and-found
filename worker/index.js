@@ -539,7 +539,7 @@ export default {
         const raw = await request.text();
         if (raw.length > 1000) return error('Request too long.',413);
         const { event } = JSON.parse(raw);
-        if (!['affiliate_click','donation_click'].includes(event)) return error('Invalid event.',400);
+        if (!['affiliate_click','donation_click','list_helpful','list_not_helpful'].includes(event)) return error('Invalid event.',400);
         await track(env,event);
         return json({ok:true});
       } catch (_) { return error('Invalid event.',400); }

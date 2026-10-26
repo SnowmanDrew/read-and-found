@@ -59,7 +59,7 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('loadShareCover',js)
         self.assertIn('bookshopUrl',js)
 
-def test_editorial_round_30(self):
+    def test_editorial_round_30(self):
         self.assertIn('editorial-v30.css?v=30',html)
         self.assertIn('id="loadingKicker"',html)
         self.assertIn('Question 1 of 3',html)
@@ -73,5 +73,7 @@ def test_editorial_round_30(self):
         self.assertIn("row.className = 'book-row'",js)
         self.assertIn('40–60 words',worker)
         self.assertIn("'/languages/eng'",worker)
+        self.assertIn("'list_helpful'",worker)
+        self.assertIn("'list_not_helpful'",worker)
 
 if __name__=='__main__': unittest.main()
