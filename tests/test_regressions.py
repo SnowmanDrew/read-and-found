@@ -33,6 +33,14 @@ class RegressionTests(unittest.TestCase):
         self.assertNotIn('buy me a drink',html.lower())
         self.assertNotIn('buy me a coffee',html.lower())
         self.assertIn('resizeFavourites()', (ROOT/'refinements-v26.js').read_text())
+    def test_brand_favicon(self):
+        favicon=(ROOT/'favicon.svg').read_text()
+        self.assertIn('favicon.svg?v=2',html)
+        for colour in ('#1c304c','#f5f6f4','#c34b36'):
+            self.assertIn(colour,favicon)
+        self.assertIn('viewBox="0 0 64 64"',favicon)
+        self.assertNotIn('font-family',favicon)
+
     def test_about_and_portrait(self):
         self.assertIn('Why we made this',html)
         self.assertIn('for good, not evil (or profit)',html)
