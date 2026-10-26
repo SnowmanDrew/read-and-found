@@ -299,7 +299,7 @@ Create an original 2–5 word "readerType" heading that fits the evidence but is
 
 Avoid common AI-tells: 'you are the kind of reader who', 'at heart', 'what unites them all', 'whether X or Y', 'not just X but Y', 'your reading DNA', 'you gravitate towards', 'tapestry', 'resonates', 'there is something about', symmetrical abstractions, and generic claims about wanting stories that 'make you think and feel'. Don't repeatedly use the same sentence structure. Don't use vague pseudo-profound aphorisms. No markdown formatting. Write as an editor would, not a personality quiz, horoscope, therapist or promotional chatbot.
 
-THE FIVE RECOMMENDATIONS: Across the set of five, draw on DIFFERENT strands of the reader's stated preferences, rather than attaching all five to the same supposed hidden motivation. Distinguish genre/subgenre and storytelling pleasures from voice, craft, mood, character, etc. Don't rely on whatever topic the last question happened to explore. For each selected book, write a "reason" of 55–80 words that feels written for this exact person. Start with one concrete and accurate detail about the book *supported by your research*, then explain why one specific thing they said points towards it. Make five genuinely different cases rather than recycling an idea across all five. When a recommendation is close in genre, subgenre, atmosphere or narrative mechanics, say so plainly and explain the additional specific link. A connection can be imperfect or a small leap; be honest about that. Never invent a plot event, assume the reader has experienced something personally, spoil an ending, or imply that two books are similar just because they share a genre or theme. Avoid stock phrases like "perfect for you", "you'll love", "resonates with", "masterful" and "must-read". Give each book a short "thread" of 2–5 original words, like a small editorial note. For each book set "sourceId" to its matching number in the RESEARCH SOURCES list; use 0 when no source specifically describes that book.
+THE FIVE RECOMMENDATIONS: Across the set of five, draw on DIFFERENT strands of the reader's stated preferences, rather than attaching all five to the same supposed hidden motivation. Distinguish genre/subgenre and storytelling pleasures from voice, craft, mood, character, etc. Don't rely on whatever topic the last question happened to explore. For each selected book, write a "reason" of 40–60 words that feels like a bookseller telling a friend why this one is worth trying. Start with one concrete and accurate detail about the book *supported by your research*, then explain why one specific thing they said points towards it. Make five genuinely different cases rather than recycling an idea across all five. Avoid meta-analysis of the reader, such as "your preference for character tension gives this similarity weight". Be warm, accurate and concise. If a book contains disturbing themes relevant to informed choice, retain a brief considerate content note. When a recommendation is close in genre, subgenre, atmosphere or narrative mechanics, say so plainly and explain the additional specific link. A connection can be imperfect or a small leap; be honest about that. Never invent a plot event, assume the reader has experienced something personally, spoil an ending, or imply that two books are similar just because they share a genre or theme. Avoid stock phrases like "perfect for you", "you'll love", "resonates with", "masterful" and "must-read". Give each book a short "thread" of 2–5 original words, like a small editorial note. For each book set "sourceId" to its matching number in the RESEARCH SOURCES list; use 0 when no source specifically describes that book.
 
 Write the portrait and five book selections as structured JSON.`;
   const result = await askStructured(env, editorial, FINAL_SCHEMA, { editor: true, outputTokens: 5200, budgetMs: 85000, effort: 'medium' });
@@ -470,23 +470,37 @@ async function handleCovers(request) {
     });
     if (!response.ok) throw new Error('catalogue_unavailable');
     const docs = (await response.json()).docs || [];
-    const covers = books.map(book => {
-      const match = docs.find(work =>
-        normaliseBook(work.title || '') === normaliseBook(book.title) &&
-        Array.isArray(work.author_name) && work.author_name.some(name =>
+    const validISBN13 = value => /^97[89]\d{10}$/.test(value) && [...value].reduce((sum,char,i)=>sum + Number(char)*(i%2 ? 3 : 1),0) % 10 === 0;
+    const covers = await Promise.all(books.map(async book => {
+      const work = docs.find(entry =>
+        normaliseBook(entry.title || '') === normaliseBook(book.title) &&
+        Array.isArray(entry.author_name) && entry.author_name.some(name =>
           normaliseBook(name) === normaliseBook(book.author)
-        ) && Number.isSafeInteger(work.cover_i) && work.cover_i > 0
+        ) && /^\/works\/OL\d+W$/.test(entry.key || '')
       );
-      if (!match) return null;
-      const validISBN13 = value => /^97[89]\d{10}$/.test(value) && [...value].reduce((sum,char,i)=>sum + Number(char)*(i%2 ? 3 : 1),0) % 10 === 0;
-      const isbn13 = (Array.isArray(match.isbn) ? match.isbn : []).find(validISBN13) || null;
-      const workId = /^\/works\/OL\d+W$/.test(match.key) ? match.key : null;
-      return {
-        coverUrl: `https://covers.openlibrary.org/b/id/${match.cover_i}-L.jpg?default=false`,
-        isbn13,
-        openLibraryUrl: workId ? `https://openlibrary.org${workId}` : 'https://openlibrary.org'
-      };
-    });
+      if (!work) return null;
+      // A work's default cover can depict a translation. Pick a documented English edition instead.
+      try {
+        const response = await fetch('https://openlibrary.org'+work.key+'/editions.json?limit=100', {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Read & Found reading discovery prototype' }
+        });
+        if (!response.ok) return null;
+        const editions = (await response.json()).entries || [];
+        const english = editions.filter(item =>
+          Array.isArray(item.languages) && item.languages.some(lang => lang?.key === '/languages/eng') &&
+          Array.isArray(item.covers) && item.covers.some(id => Number.isSafeInteger(id) && id > 0)
+        );
+        const edition = english.find(item => (item.isbn_13 || []).some(validISBN13)) || english[0];
+        if (!edition) return null;
+        const coverId = edition.covers.find(id => Number.isSafeInteger(id) && id > 0);
+        return {
+          coverUrl: 'https://covers.openlibrary.org/b/id/'+coverId+'-L.jpg?default=false',
+          isbn13: (edition.isbn_13 || []).find(validISBN13) || null,
+          openLibraryUrl: 'https://openlibrary.org'+work.key
+        };
+      } catch (_) { return null; }
+    }));
     return json({ covers });
   } catch (err) {
     console.warn('Optional Open Library cover lookup unavailable:', err.name || 'error');

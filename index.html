@@ -15,6 +15,7 @@
   <script src="app.js?v=28" defer></script>
 <link rel="stylesheet" href="refinements-v26.css?v=28">
 <link rel="stylesheet" href="bookshop-v28.css?v=29">
+<link rel="stylesheet" href="editorial-v30.css?v=30">
 <script src="refinements-v26.js?v=26" defer></script>
 <script src="bookshop-v28.js?v=28" defer></script>
 </head>
@@ -70,13 +71,13 @@
         <div class="journey-grid">
           <aside class="conversation-aside">
             <div class="eyebrow">A conversation about books</div>
-            <h2>Let's get specific.</h2>
-            <div class="timeline-heading"><span>Your answers</span><span id="timelineCount">01 / 04</span></div>
+            <h2 id="conversationAsideHeading">Let's get specific.</h2>
+            <div class="timeline-heading"><span>Your reading notes</span><span id="timelineCount">Question 1 of 3</span></div>
             <ol id="conversationLedger" class="conversation-ledger"></ol>
             <button type="button" class="subtle-link" id="restartFromJourney"><i data-lucide="rotate-ccw" aria-hidden="true"></i> Start over</button>
           </aside>
           <div class="question-main">
-            <div class="question-topline"><span id="questionIndex">Question 1 of 3</span><span>Read & Found</span></div>
+            <div class="question-topline"><span id="questionIndex">Question 1 of 3</span></div>
             <div class="progress-track"><span id="progressFill"></span></div>
             <div class="question-content" id="questionContent">
               <p class="question-lead" id="questionLead" hidden></p>
@@ -99,7 +100,7 @@
         <div class="results-lede">
           <div>
             <div class="eyebrow">A reading list, just for you</div>
-            <h1 id="resultsHeading">Five for your pile.</h1>
+            <h1 id="resultsHeading">Five books, picked for you.</h1>
             <p class="results-subtitle">A few familiar things. A few unexpected ones.</p>
           </div>
           
@@ -121,10 +122,10 @@
             </div>
           </div>
           <div class="portrait-favourites" id="portraitFavourites" hidden>
-            <div class="portrait-favourites-head"><span>The books you started with</span><span>Your favourites</span></div>
+            <div class="portrait-favourites-head"><span>Books you mentioned</span><span>From your answers</span></div>
             <div class="portrait-favourite-shelf" id="portraitFavouriteShelf"></div>
           </div>
-          <div class="portrait-footer"><span>Written from our conversation</span><span>Read & Found · your reading notes</span></div>
+          <p class="portrait-starting-point" id="portraitStartingPoint" hidden></p><div class="portrait-footer"><span>Written from our conversation</span><span>Read & Found · your reading notes</span></div>
         </section>
         <div class="portrait-share-actions">
           <div><strong>Keep this bit.</strong><span>Save these notes, or send them to another reader.</span></div>
@@ -142,11 +143,19 @@
         <div class="affiliate-disclosure"><i data-lucide="heart-handshake" aria-hidden="true"></i><p>We recommend books because they suit you, never because of a commission. Some Bookshop.org links may earn Read & Found a small commission, at no extra cost to you, helping support this independent project.</p></div>
         <div class="endnote">
           <h2>Let me know how you get on.</h2>
-          <p class="endnote-description">Read &amp; Found is free to use, but each set of recommendations costs a little to run. If you'd like to help cover the AI and hosting costs, you can support the project.</p>
-          <a class="kofi-link" href="https://ko-fi.com/readandfound" target="_blank" rel="noopener noreferrer" id="kofiSupport"><span>Help cover running costs</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
           <div class="endnote-actions">
             <button class="primary-button" type="button" id="startAgain"><span>Start again</span><i data-lucide="rotate-ccw" aria-hidden="true"></i></button>
             <button class="outline-button" type="button" id="copyList"><span>Copy reading list</span><i data-lucide="copy" aria-hidden="true"></i></button>
+          </div>
+          <div class="results-feedback" id="resultsFeedback">
+            <span>Were these suggestions useful?</span>
+            <button type="button" data-feedback="yes">Yes, thanks!</button>
+            <button type="button" data-feedback="no">Not quite</button>
+            <span class="feedback-thanks" id="feedbackThanks" role="status" hidden>Thanks — that's genuinely useful to know.</span>
+          </div>
+          <div class="endnote-support">
+            <p class="endnote-description">Read &amp; Found is free to use, but each set of recommendations costs a little to run. If you'd like to help cover the AI and hosting costs, you can support the project.</p>
+            <a class="kofi-link" href="https://ko-fi.com/readandfound" target="_blank" rel="noopener noreferrer" id="kofiSupport"><span>Help cover running costs</span><i data-lucide="arrow-up-right" aria-hidden="true"></i></a>
           </div>
         </div>
       </section>
@@ -162,7 +171,7 @@
   </div>
 
   <div id="loadingOverlay" class="loading-overlay" hidden role="status" aria-live="polite">
-    <div class="loading-card"><div class="loading-flower" id="loadingIcon"><i data-lucide="loader-circle" aria-hidden="true"></i></div><div id="loadingTitle" class="loading-title">A note from the shelves</div><p id="loadingDetail">Looking for the right books and the right questions.</p><span id="loadingRule" class="loading-rule"></span><button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button><button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button></div>
+    <div class="loading-card"><div class="loading-kicker" id="loadingKicker">A note from the shelves</div><div class="loading-flower" id="loadingIcon"><i data-lucide="loader-circle" aria-hidden="true"></i></div><div id="loadingTitle" class="loading-title">A note from the shelves</div><p id="loadingDetail">Looking for the right books and the right questions.</p><div class="loading-progress" aria-hidden="true"><span id="loadingRule" class="loading-rule"></span></div><button type="button" id="retryButton" class="primary-button" hidden><span>Try again</span><i data-lucide="refresh-cw" aria-hidden="true"></i></button><button type="button" id="backFromError" class="text-button" hidden>Back to my answers</button></div>
   </div>
 
   <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsHeading">

@@ -7,6 +7,7 @@
   const $ = id => document.getElementById(id);
   const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', favouriteBooks: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
   const stages = { intro: $('introStage'), conversation: $('conversationStage'), results: $('resultsStage') };
+  let loadingTicker = null;
   let retryAction = null;
   let toastTimer = null;
   let coverLookupVersion = 0;
@@ -43,32 +44,45 @@
     window.scrollTo({ top: 0, behavior: 'instant' });
   }
 
+  function stopLoadingTicker() {
+    if (loadingTicker !== null) clearInterval(loadingTicker);
+    loadingTicker = null;
+  }
   function loading(title, description) {
-    state.busy = true;
-    $('loadingTitle').textContent = title;
-    $('loadingDetail').textContent = description;
-    $('loadingIcon').hidden = false;
-    $('loadingRule').hidden = false;
-    $('retryButton').hidden = true;
-    $('backFromError').hidden = true;
-    $('loadingOverlay').hidden = false;
-    document.body.style.overflow = 'hidden';
+    state.busy = true; stopLoadingTicker();
+    const longWait = /reading list/i.test(title);
+    const notes = longWait ? [
+      ['Finding your five books…','Looking beyond the obvious choices.'],
+      ['Checking the shelves…','Making sure the details are right.'],
+      ['Following a few good leads…','Some books are harder to find than others.'],
+      ['Writing your reading notes…','Putting the reasons into words.'],
+      ['Nearly there…','Taking another look at your answers.']
+    ] : [[title,description],
+      ['Thinking about what you said…','Following the thread between your favourites.'],
+      ['One good question at a time…','Trying not to make any easy assumptions.']];
+    let index = 0;
+    const advance = () => {
+      const [heading,detail] = notes[index++ % notes.length];
+      $('loadingTitle').textContent = heading; $('loadingDetail').textContent = detail;
+      $('loadingKicker').textContent = longWait ? 'Making a reading list' : 'A note from the shelves';
+    };
+    advance(); loadingTicker = setInterval(advance,7200);
+    $('loadingOverlay').classList.toggle('is-long-wait',longWait);
+    $('loadingOverlay').classList.toggle('is-question-wait',!longWait);
+    $('loadingIcon').hidden = false; $('loadingRule').hidden = false;
+    $('retryButton').hidden = true; $('backFromError').hidden = true;
+    $('loadingOverlay').hidden = false; document.body.style.overflow = 'hidden';
   }
-
   function hideLoading() {
-    state.busy = false;
-    retryAction = null;
-    $('loadingOverlay').hidden = true;
-    document.body.style.overflow = '';
+    stopLoadingTicker(); state.busy = false; retryAction = null;
+    $('loadingOverlay').hidden = true; document.body.style.overflow = '';
   }
-
   function showError(message, onRetry) {
-    state.busy = false;
-    retryAction = onRetry;
+    stopLoadingTicker(); state.busy = false; retryAction = onRetry;
+    $('loadingKicker').textContent = 'A note from the shelves';
     $('loadingTitle').textContent = 'A small interruption.';
     $('loadingDetail').textContent = message;
-    $('loadingIcon').hidden = true;
-    $('loadingRule').hidden = true;
+    $('loadingIcon').hidden = true; $('loadingRule').hidden = true;
     $('retryButton').hidden = /two sets of recommendations today|book swaps available today/i.test(message);
     $('backFromError').hidden = false;
   }
@@ -109,7 +123,7 @@
 
   function ledger() {
     const list = $('conversationLedger'); list.replaceChildren();
-    const labels = ['YOUR FAVOURITES','FIRST THOUGHT','A LITTLE MORE','FINAL QUESTION'];
+    const labels = ['Your favourites','First question','Second question','Third question'];
     for (let i=0;i<4;i++) {
       const li = document.createElement('li');
       if (i === state.answers.length + 1) li.className = 'is-current';
@@ -119,22 +133,20 @@
       if (i > state.answers.length) answer.classList.add('ledger-pending');
       li.append(label,answer); list.append(li);
     }
-    $('timelineCount').textContent = `${String(Math.min(4,state.answers.length+2)).padStart(2,'0')} / 04`;
+    $('timelineCount').textContent = `Question ${Math.min(3,state.answers.length+1)} of 3`;
   }
 
   function renderQuestion() {
     const index = state.answers.length;
     $('questionIndex').textContent = `Question ${index+1} of 3`;
-    $('progressFill').style.width = `${(index+1)/3*100}%`;
+    $('progressFill').style.width = `${index/3*100}%`;
     $('questionLead').textContent = state.questions[index].lead || '';
     $('questionLead').hidden = !state.questions[index].lead;
     $('questionHeading').textContent = state.questions[index].question;
-    const sourceArea = $('questionSources'); sourceArea.replaceChildren();
-    if (state.initialSources.length) {
-      const label = document.createElement('span'); label.textContent = 'READING NOTES'; sourceArea.append(label);
-      for (const item of state.initialSources.slice(0,2)) sourceArea.append(sourceLink(item));
-      sourceArea.hidden = false;
-    } else sourceArea.hidden = true;
+    $('questionHeading').classList.toggle('is-long',state.questions[index].question.length>180);
+    $('conversationAsideHeading').textContent = ["Let's get specific.",'Another angle.','Nearly there.'][index];
+    // Keep research citations in the final reading list, not in the question area.
+    $('questionSources').replaceChildren(); $('questionSources').hidden = true;
     $('answerInput').value = '';
     $('answerInput').placeholder = /have you (read|come across)|ever read|are you familiar with/i.test(state.questions[index].question)
       ? 'If you have, what did you think? If not, what’s your instinct?'
@@ -175,7 +187,7 @@
 
   function createBookRow(book,index) {
     const row = document.createElement('article');
-    row.className = `book-row${index===0 ? ' is-featured' : ''}`;
+    row.className = 'book-row';
     row.dataset.bookIndex = String(index);
     row.style.animationDelay = `0ms`;
     const number = document.createElement('div'); number.className = 'book-number'; number.textContent = String(index+1).padStart(2,'0');
@@ -184,7 +196,7 @@
     const title = document.createElement('h3'); title.className = 'book-title'; title.textContent = book.title;
     const author = document.createElement('p'); author.className = 'book-author'; author.textContent = `by ${book.author}`;
     const reason = document.createElement('p'); reason.className = 'book-reason'; reason.textContent = book.reason;
-    const source = book.source?.url ? sourceLink(book.source) : null;
+    const source = book.source?.url ? sourceLink(book.source) : sourceLink({title:'Open Library',url:'https://openlibrary.org/search?q='+encodeURIComponent(book.title+' '+book.author)});
     if (source) {
       source.className = 'book-source';
       source.replaceChildren(document.createTextNode('About this book '));
@@ -196,7 +208,7 @@
     const readButton = document.createElement('button'); readButton.type = 'button'; readButton.className = 'read-trigger';
     readButton.setAttribute('aria-expanded','false'); readButton.setAttribute('aria-controls',`read-choices-${index}`);
     const icon = document.createElement('i'); icon.dataset.lucide = 'book-check'; icon.setAttribute('aria-hidden','true');
-    readButton.append(icon,document.createTextNode(' Already read?'));
+    readButton.append(icon,document.createTextNode(' Read it? Swap for another'));
     const choices = document.createElement('div'); choices.className = 'read-choices'; choices.id = `read-choices-${index}`; choices.hidden = true;
     const prompt = document.createElement('span'); prompt.className = 'read-prompt'; prompt.textContent = 'How was it?';
     const options = document.createElement('div'); options.className = 'read-options';
@@ -216,14 +228,15 @@
     });
     feedback.append(readButton,choices);
     info.append(kicker,title,author,reason);
-    if (source) info.append(source);
+    const links = document.createElement('div'); links.className = 'book-links';
+    if (source) links.append(source);
     const buy = document.createElement('a'); buy.className = 'book-buy'; buy.target = '_blank';
     buy.rel = 'noopener noreferrer sponsored'; buy.dataset.buyIndex = String(index);
     buy.href = bookshopUrl(book);
     const shopIcon = document.createElement('i'); shopIcon.dataset.lucide = 'shopping-bag'; shopIcon.setAttribute('aria-hidden','true');
     const shopArrow = document.createElement('i'); shopArrow.dataset.lucide = 'arrow-up-right'; shopArrow.setAttribute('aria-hidden','true');
     buy.append(shopIcon,document.createTextNode(' Find a copy at Bookshop.org '),shopArrow);
-    info.append(buy);
+    links.append(buy); info.append(links);
     info.append(feedback);
     row.append(number,coverFor(book,index),info);
     return row;
@@ -235,11 +248,17 @@
     const list = $('booksList'); list.replaceChildren();
     state.books.forEach((book,index) => list.append(createBookRow(book,index)));
     const sources = $('researchSources'); const links = $('researchLinks'); links.replaceChildren();
-    state.researchSources.forEach(item => {
+    const allSources = [...state.researchSources,...state.initialSources].filter((item,index,all)=>item?.url && all.findIndex(other=>other?.url===item.url)===index);
+    allSources.forEach(item => {
       const li = document.createElement('li'); li.append(sourceLink(item)); links.append(li);
     });
-    sources.hidden = !state.researchSources.length;
+    sources.hidden = !allSources.length;
     sources.open = false;
+    const starting = $('portraitStartingPoint');
+    starting.textContent = 'You started with: ' + snippet(state.favourites,250);
+    starting.hidden = !state.favourites;
+    $('feedbackThanks').hidden = true;
+    $('resultsFeedback').querySelectorAll('button').forEach(button=>button.disabled=false);
     stage('results'); icons(); hydrateCovers(); hydrateFavouriteCovers();
   }
 
@@ -613,6 +632,12 @@
   $('restartFromJourney').addEventListener('click',reset);
   $('startAgain').addEventListener('click',reset);
   $('copyList').addEventListener('click',copyList);
+  $('resultsFeedback').querySelectorAll('[data-feedback]').forEach(button=>button.addEventListener('click',()=>{
+    const vote=button.dataset.feedback==='yes'?'list_helpful':'list_not_helpful';
+    try{navigator.sendBeacon('/api/event',new Blob([JSON.stringify({event:vote})],{type:'text/plain'}));}catch(_){}
+    $('resultsFeedback').querySelectorAll('button').forEach(item=>item.disabled=true);
+    $('feedbackThanks').hidden=false;
+  }));
   $('downloadPortrait').addEventListener('click',()=>exportPortrait(false));
   $('sharePortrait').addEventListener('click',()=>exportPortrait(true));
   for (const id of ['kofiSupport','footerKofi']) $(id)?.addEventListener('click',()=>{

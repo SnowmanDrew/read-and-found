@@ -59,4 +59,19 @@ class RegressionTests(unittest.TestCase):
         self.assertIn('loadShareCover',js)
         self.assertIn('bookshopUrl',js)
 
+def test_editorial_round_30(self):
+        self.assertIn('editorial-v30.css?v=30',html)
+        self.assertIn('id="loadingKicker"',html)
+        self.assertIn('Question 1 of 3',html)
+        self.assertIn('portraitStartingPoint',html)
+        self.assertIn('data-feedback="yes"',html)
+        self.assertIn('Help cover running costs',html)
+        self.assertIn("state.answers.length+1",js)
+        self.assertIn("index/3*100",js)
+        self.assertNotIn("index+1)/3*100",js)
+        self.assertIn('allSources',js)
+        self.assertIn("row.className = 'book-row'",js)
+        self.assertIn('40–60 words',worker)
+        self.assertIn("'/languages/eng'",worker)
+
 if __name__=='__main__': unittest.main()
