@@ -132,6 +132,7 @@ class RegressionTests(unittest.TestCase):
     def test_swap_book_metadata_and_reading_trail(self):
         self.assertIn('if (!item) return;',js)
         self.assertIn("metadataFallback",worker)
+        self.assertIn('const usablePages',worker)
         self.assertIn("renderReadTrail()",js)
         self.assertIn('alreadyReadTrail',html)
         self.assertIn('readTrail.push',js)

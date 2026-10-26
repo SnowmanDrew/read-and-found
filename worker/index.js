@@ -474,6 +474,9 @@ async function handleCovers(request) {
   // Send only public titles and authors to Open Library, never private answers.
   const validISBN13 = value => /^97[89]\d{10}$/.test(value) &&
     [...value].reduce((sum,char,i)=>sum + Number(char)*(i%2 ? 3 : 1),0) % 10 === 0;
+  // Avoid treating short extracts, samples and reading guides as whole editions.
+  const usablePages = edition => Number.isInteger(edition?.number_of_pages) &&
+    edition.number_of_pages >= 80 && edition.number_of_pages <= 3000;
   const coverId = edition => (Array.isArray(edition?.covers) ? edition.covers : [])
     .find(id => Number.isSafeInteger(id) && id > 0);
   const english = edition => edition.languages?.some(lang => lang?.key === '/languages/eng');
@@ -514,7 +517,7 @@ async function handleCovers(request) {
         coverUrl: id ? 'https://covers.openlibrary.org/b/id/'+id+'-L.jpg?default=false' : null,
         isbn13: (edition?.isbn_13 || []).find(validISBN13) || null,
         year,
-        pages: Number.isInteger(edition?.number_of_pages) && edition.number_of_pages > 0 ? edition.number_of_pages : null,
+        pages: usablePages(edition) ? edition.number_of_pages : null,
         series: Array.isArray(edition?.series) ? String(edition.series[0] || '').slice(0,100) : null,
         openLibraryUrl:'https://openlibrary.org'+work.key
       });
@@ -524,13 +527,14 @@ async function handleCovers(request) {
         const entries = data.entries || [];
         // Page count and publication year are valuable even if no edition has cover art.
         const plausible = entries.filter(item => english(item) || unlabelledEnglishTitle(item,book));
-        const better = plausible.find(item => Number.isInteger(item.number_of_pages) && item.number_of_pages > 0) || plausible[0];
-        if (better && (!metadataEdition || (!metadataEdition.number_of_pages && better.number_of_pages)))
+        const better = plausible.find(usablePages) || plausible[0];
+        if (better && (!metadataEdition || (!usablePages(metadataEdition) && usablePages(better))))
           metadataEdition = better;
         const editions = entries.filter(item => !!coverId(item));
         const confirmed = editions.filter(english);
         const fallback = editions.filter(item => unlabelledEnglishTitle(item,book));
-        const picked = confirmed.find(item => (item.isbn_13 || []).some(validISBN13)) || confirmed[0];
+        const picked = confirmed.find(item => usablePages(item) && (item.isbn_13 || []).some(validISBN13)) ||
+          confirmed.find(usablePages) || confirmed.find(item => (item.isbn_13 || []).some(validISBN13)) || confirmed[0];
         if (picked) {
           const result = metadata(picked,coverId(picked));
           if (!result.pages && metadataEdition) result.pages = metadata(metadataEdition).pages;
