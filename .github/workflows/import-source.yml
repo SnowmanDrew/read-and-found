@@ -1,0 +1,135 @@
+name: Import Read & Found application source
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/import-source.yml'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Retrieve the verified production source files
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://afterword-coral.vercel.app"
+          mkdir -p worker api scripts
+          for file in index.html styles.css app.js dashboard.html favicon.svg lucide.min.js worker/index.js worker/metrics.js refinements-v26.css refinements-v26.js; do
+            echo "Retrieving $file"
+            curl -fSL --retry 3 --connect-timeout 15 --max-time 90 "$base/$file" -o "$file"
+            test -s "$file"
+          done
+          # Verify source hashes from the successful Vercel production deployment.
+          echo "d90c0740c819a7fd4bef5f6ffc14745040afeef1  app.js" | sha1sum --check
+          echo "2417102be9656447979309e7e05a0b343edd254b  worker/index.js" | sha1sum --check
+          echo "61e6131e7edc955d5a43d6d68381aa780544eee8  lucide.min.js" | sha1sum --check
+          node --check app.js
+          node --check worker/index.js
+      - name: Create Vercel API adapter and configuration
+        shell: bash
+        run: |
+          cat > api/_adapter.js <<'EOF'
+          import worker from '../worker/index.js';
+
+          const MAX_BODY_BYTES = 65000;
+
+          async function readRequestBody(req) {
+            if (req.body !== undefined) {
+              const bytes = Buffer.from(typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+              if (bytes.length > MAX_BODY_BYTES) throw new Error('too_large');
+              return bytes;
+            }
+            const chunks = [];
+            let size = 0;
+            for await (const chunk of req) {
+              size += chunk.length;
+              if (size > MAX_BODY_BYTES) throw new Error('too_large');
+              chunks.push(chunk);
+            }
+            return Buffer.concat(chunks);
+          }
+
+          export async function handle(req, res, route) {
+            const isGet = ['out', 'stats'].includes(route);
+            if (req.method !== (isGet ? 'GET' : 'POST')) {
+              res.statusCode = 405;
+              res.setHeader('Allow', isGet ? 'GET' : 'POST');
+              res.end('Method not allowed');
+              return;
+            }
+            let body;
+            try { body = isGet ? null : await readRequestBody(req); }
+            catch {
+              res.statusCode = 413;
+              res.end('Request too long');
+              return;
+            }
+            const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost';
+            const protocol = req.headers['x-forwarded-proto'] || 'https';
+            const query = req.url?.includes('?') ? req.url.slice(req.url.indexOf('?')) : '';
+            const url = `${protocol}://${host}/api/${route}${query}`;
+            const headers = new Headers();
+            for (const [key, value] of Object.entries(req.headers)) {
+              if (value != null && key !== 'host' && key !== 'content-length') headers.set(key, Array.isArray(value) ? value.join(', ') : value);
+            }
+            const request = new Request(url, isGet ? { method: 'GET', headers } : { method: 'POST', headers, body });
+            try {
+              const response = await worker.fetch(request, process.env);
+              res.statusCode = response.status;
+              response.headers.forEach((value, name) => res.setHeader(name, value));
+              res.end(Buffer.from(await response.arrayBuffer()));
+            } catch (error) {
+              console.error('Read & Found API error:', error?.message || 'unknown');
+              res.statusCode = 502;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({error:'The book service is temporarily unavailable.'}));
+            }
+          }
+          EOF
+          for route in read event out stats replace covers; do
+            cat > "api/$route.js" <<EOF
+          import { handle } from './_adapter.js';
+          export default (req, res) => handle(req, res, '$route');
+          EOF
+          done
+          cat > vercel.json <<'EOF'
+          {
+            "version": 2,
+            "functions": {
+              "api/read.js": {"maxDuration": 300},
+              "api/replace.js": {"maxDuration": 300},
+              "api/covers.js": {"maxDuration": 60},
+              "api/stats.js": {"maxDuration": 15},
+              "api/event.js": {"maxDuration": 15},
+              "api/out.js": {"maxDuration": 15}
+            }
+          }
+          EOF
+          cat > package.json <<'EOF'
+          {"name":"read-and-found","private":true,"version":"1.26.0","type":"module","engines":{"node":">=20"}}
+          EOF
+          mkdir -p scripts
+          echo '// Application files are committed directly; no build-time patching.' > scripts/patch.mjs
+          cat > .gitignore <<'EOF'
+          node_modules/
+          .vercel/
+          .env
+          .env.*
+          !.env.example
+          .DS_Store
+          EOF
+          node --check api/_adapter.js
+      - name: Commit imported application source
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html styles.css app.js dashboard.html favicon.svg lucide.min.js worker/ refinements-v26.css refinements-v26.js api/ vercel.json package.json scripts/patch.mjs .gitignore
+          git diff --cached --quiet && exit 0
+          git commit -m 'Import complete Read & Found application from verified production'
+          git push origin HEAD:main
