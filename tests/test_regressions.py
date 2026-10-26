@@ -22,7 +22,10 @@ class RegressionTests(unittest.TestCase):
         self.assertNotIn('AN IMAGINARY PRESS',html)
         self.assertNotIn('THE READING ROOM',html)
         self.assertNotIn('STEP 1 OF 4',html)
-        self.assertIn('Made by Drew',html)
+        self.assertEqual(html.count('Made by Drew'),1)
+        self.assertNotIn('class="footer-note"',html)
+        self.assertIn('About Read &amp; Found',html)
+        self.assertNotIn('more or less',html)
         self.assertIn('site-footer compact-footer',html)
         self.assertIn('resizeFavourites()', (ROOT/'refinements-v26.js').read_text())
     def test_about_and_portrait(self):

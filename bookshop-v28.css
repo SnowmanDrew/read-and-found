@@ -263,3 +263,5 @@ em {font-style:normal}
 .book-cover.has-real-cover {padding:0!important}
 .book-cover .real-cover {display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:10}
 @media(max-width:600px){.book-cover:not(.has-real-cover){padding:9px!important}.book-cover:not(.has-real-cover) .cover-title{font-size:15px}}
+/* The footer no longer needs an additional author credit. */
+.compact-footer{justify-content:flex-end}
