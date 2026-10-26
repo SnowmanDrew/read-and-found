@@ -22,13 +22,13 @@
   <link rel="icon" href="favicon.svg?v=2" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=26">
   <script src="lucide.min.js" defer></script>
-  <script src="app.js?v=34" defer></script>
+  <script src="app.js?v=35" defer></script>
 <link rel="stylesheet" href="refinements-v26.css?v=28">
 <link rel="stylesheet" href="bookshop-v28.css?v=29">
 <link rel="stylesheet" href="editorial-v30.css?v=31">
 <link rel="stylesheet" href="signature-v32.css?v=32">
 <link rel="stylesheet" href="polish-v33.css?v=33">
-<link rel="stylesheet" href="reading-list-v34.css?v=34">
+<link rel="stylesheet" href="reading-list-v34.css?v=35">
 <script src="refinements-v26.js?v=26" defer></script>
 <script src="bookshop-v28.js?v=28" defer></script>
 </head>
@@ -149,6 +149,10 @@
         </div>
         <div class="recommendations-heading"><span>Five books to try</span><span class="heading-rule"></span><span>01 — 05</span></div>
         <div class="books-list" id="booksList"></div>
+        <section class="already-read-trail" id="alreadyReadTrail" hidden aria-label="Books you have already read">
+          <div class="read-trail-heading"><span>already on your shelves</span><small>your ratings help shape the next picks</small></div>
+          <ul id="alreadyReadList"></ul>
+        </section>
         <div class="visually-hidden" id="swapAnnouncement" role="status" aria-live="polite"></div>
         <p class="cover-credit" id="coverCredit" hidden>Cover imagery via <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer">Open Library <i data-lucide="arrow-up-right" aria-hidden="true"></i></a>.</p>
         <details class="research-sources" id="researchSources" hidden>

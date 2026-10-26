@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', shareProof: '', sharedListUrl: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], sessionId: '', stage: 'intro', busy: false };
+  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', shareProof: '', sharedListUrl: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], readTrail: [], sessionId: '', stage: 'intro', busy: false };
   const stages = { intro: $('introStage'), conversation: $('conversationStage'), results: $('resultsStage') };
   let loadingTicker = null;
   let retryAction = null;
@@ -241,13 +241,25 @@
     const number = document.createElement('div'); number.className = 'book-number'; number.textContent = String(index+1).padStart(2,'0');
     const info = document.createElement('div'); info.className = 'book-info';
     const kicker = document.createElement('div'); kicker.className = 'book-kicker'; kicker.textContent = book.thread || (index===0 ? 'Start here' : 'The connection');
-    const roleLabels = {closest_match:'closest match',tone_match:'your kind of mood',wildcard:'wildcard'};
-    const roleBadge = roleLabels[book.role] ? document.createElement('span') : null;
-    if (roleBadge) { roleBadge.className = 'book-match-badge'; roleBadge.textContent = roleLabels[book.role]; }
+    const roleLabels = {
+      closest_match:{label:'made for you',icon:'heart'},
+      tone_match:{label:'right mood',icon:'cloud-sun'},
+      wildcard:{label:'wild card',icon:'dice-5'},
+      fresh_pick:{label:'fresh find',icon:'sparkles'}
+    };
+    const role = roleLabels[book.role];
+    const roleBadge = role ? document.createElement('span') : null;
+    if (roleBadge) {
+      roleBadge.className = 'book-match-badge sticker-' + book.role;
+      const badgeIcon = document.createElement('i'); badgeIcon.dataset.lucide = role.icon; badgeIcon.setAttribute('aria-hidden','true');
+      roleBadge.append(badgeIcon,document.createTextNode(role.label));
+    }
     const title = document.createElement('h3'); title.className = 'book-title'; title.textContent = book.title;
     const author = document.createElement('p'); author.className = 'book-author'; author.textContent = `by ${book.author}`;
     const detail = document.createElement('p'); detail.className = 'book-detail';
     detail.textContent = detailsForBook(book); detail.hidden = !detail.textContent;
+    const media = document.createElement('div'); media.className = 'book-media';
+    media.append(coverFor(book,index),detail);
     const reason = document.createElement('p'); reason.className = 'book-reason'; reason.textContent = book.reason;
     const note = document.createElement('details'); note.className = 'book-content-note'; note.hidden = !book.contentNote;
     const noteTitle = document.createElement('summary'); noteTitle.textContent = 'content note';
@@ -255,10 +267,9 @@
     note.append(noteTitle,noteBody);
     const source = book.source?.url ? sourceLink(book.source) : sourceLink({title:'Open Library',url:'https://openlibrary.org/search?q='+encodeURIComponent(book.title+' '+book.author)});
     if (source) {
-      source.className = 'book-source';
-      source.replaceChildren(document.createTextNode('About this book '));
-      const arrow = document.createElement('i'); arrow.dataset.lucide = 'arrow-up-right'; arrow.setAttribute('aria-hidden','true');
-      source.append(arrow);
+      source.className = 'book-meta-source';
+      source.replaceChildren(document.createTextNode('about this book'));
+      media.append(source);
     }
 
     const feedback = document.createElement('div'); feedback.className = 'book-feedback';
@@ -280,32 +291,48 @@
       const opening = choices.hidden;
       document.querySelectorAll('.read-choices').forEach(panel => { panel.hidden = true; });
       document.querySelectorAll('.read-trigger').forEach(button => button.setAttribute('aria-expanded','false'));
+      document.querySelectorAll('.book-feedback').forEach(item => item.classList.remove('is-open'));
       choices.hidden = !opening;
+      feedback.classList.toggle('is-open',opening);
       readButton.setAttribute('aria-expanded',String(opening));
     });
     feedback.append(readButton,choices);
     info.append(kicker);
     if (roleBadge) info.append(roleBadge);
-    info.append(title,author,detail,reason,note);
-    const links = document.createElement('div'); links.className = 'book-links';
-    if (source) links.append(source);
+    info.append(title,author,reason);
+    const actions = document.createElement('div'); actions.className = 'book-actions';
     const buy = document.createElement('a'); buy.className = 'book-buy'; buy.target = '_blank';
     buy.rel = 'noopener noreferrer sponsored'; buy.dataset.buyIndex = String(index);
     buy.href = bookshopUrl(book);
     const shopIcon = document.createElement('i'); shopIcon.dataset.lucide = 'shopping-bag'; shopIcon.setAttribute('aria-hidden','true');
-    const shopArrow = document.createElement('i'); shopArrow.dataset.lucide = 'arrow-up-right'; shopArrow.setAttribute('aria-hidden','true');
-    buy.append(shopIcon,document.createTextNode(' Find a copy at Bookshop.org '),shopArrow);
-    links.append(buy); info.append(links);
-    info.append(makeBorrowPanel(book));
-    info.append(feedback);
-    row.append(number,coverFor(book,index),info);
+    buy.append(shopIcon,document.createTextNode(' Bookshop.org'));
+    actions.append(buy,makeBorrowPanel(book),feedback);
+    if (book.contentNote) actions.append(note);
+    info.append(actions);
+    row.append(number,media,info);
     return row;
+  }
+
+  function renderReadTrail() {
+    const section = $('alreadyReadTrail'), list = $('alreadyReadList');
+    list.replaceChildren();
+    state.readTrail.forEach(({ title, author, rating }) => {
+      const item = document.createElement('li');
+      const name = document.createElement('span'); name.className = 'read-trail-title'; name.textContent = title;
+      const by = document.createElement('span'); by.className = 'read-trail-author'; by.textContent = ' — ' + author;
+      const verdict = document.createElement('span'); verdict.className = 'read-trail-rating rating-' + rating;
+      verdict.textContent = verdicts.find(v => v.id === rating)?.label.toLowerCase() || 'read';
+      item.append(name,by,verdict);
+      list.append(item);
+    });
+    section.hidden = !state.readTrail.length;
   }
 
   function renderResults() {
     $('readerType').textContent = state.readerType;
     $('portraitText').textContent = state.portrait;
     const list = $('booksList'); list.replaceChildren();
+    renderReadTrail();
     state.books.forEach((book,index) => list.append(createBookRow(book,index)));
     const sources = $('researchSources'); const links = $('researchLinks'); links.replaceChildren();
     const allSources = [...state.researchSources,...state.initialSources].filter((item,index,all)=>item?.url && all.findIndex(other=>other?.url===item.url)===index);
@@ -325,7 +352,7 @@
   }
 
   function attachCover(item,index,book,version) {
-    if (!item || !/^https:\/\/covers\.openlibrary\.org\/b\/id\/\d+-L\.jpg\?default=false$/.test(item.coverUrl)) return;
+    if (!item) return;
     if (version !== coverLookupVersion || state.stage !== 'results' ||
         state.books[index]?.title !== book.title || state.books[index]?.author !== book.author) return;
     if (item.year) state.books[index].year = item.year;
@@ -338,6 +365,7 @@
     const worldcat = row?.querySelector('[data-worldcat]');
     if (worldcat && state.books[index].isbn13)
       worldcat.href = 'https://search.worldcat.org/search?' + new URLSearchParams({q:'bn:' + state.books[index].isbn13});
+    if (!/^https:\/\/covers\.openlibrary\.org\/b\/id\/\d+-L\.jpg\?default=false$/.test(item.coverUrl || '')) return;
     const cover = $('booksList').querySelector(`[data-cover-index="${index}"]`);
     if (!cover) return;
     cover.querySelector('.real-cover')?.remove();
@@ -535,7 +563,10 @@
           if (duplicate) throw new Error('That book is already in your five.');
           const oldRow = $('booksList').querySelector(`[data-book-index="${job.index}"]`);
           if (!oldRow) continue;
+          book.role = 'fresh_pick';
           state.books[job.index] = book;
+          state.readTrail.push({title:job.book.title,author:job.book.author,rating:job.rating});
+          renderReadTrail();
           // A saved link describes the old list. After a swap, let the reader
           // deliberately save a new immutable link for the updated choices.
           state.sharedListUrl = '';
@@ -581,7 +612,7 @@
         state.answers.push(pending); state.questions.push({lead:result.lead || '',question:result.question}); renderQuestion();
       } else {
         if (!Array.isArray(result.books) || result.books.length !== 5 || !result.readerType || !result.portrait) throw new Error('The recommendations were incomplete. Try again.');
-        state.answers.push(pending); state.books = result.books; state.readerType = result.readerType; state.portrait = result.portrait;
+        state.answers.push(pending); state.books = result.books; state.readTrail=[]; state.feedback=[]; state.readerType = result.readerType; state.portrait = result.portrait;
         state.shareProof = result.shareProof || ''; state.sharedListUrl = '';
         state.favouriteBooks = Array.isArray(result.favouriteBooks) ? result.favouriteBooks.slice(0,6) : [];
         state.favouriteAuthors = Array.isArray(result.favouriteAuthors) ? result.favouriteAuthors.slice(0,8) : [];
@@ -595,7 +626,7 @@
     if (state.busy) return;
     coverLookupVersion++; favouriteCoverLookupVersion++;
     recommendationEpoch++; activeSwapController?.abort(); swapQueue=[];
-    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.favouriteAuthors=[]; state.shareProof=''; state.sharedListUrl=''; state.feedback=[]; state.sessionId='';
+    state.favourites = ''; state.questions=[]; state.answers=[]; state.researchNotes=''; state.initialSources=[]; state.researchSources=[]; state.books=[]; state.readerType=''; state.portrait=''; state.favouriteBooks=[]; state.favouriteAuthors=[]; state.shareProof=''; state.sharedListUrl=''; state.feedback=[]; state.readTrail=[]; state.sessionId='';
     $('favourites').value=''; $('characterCount').textContent='0'; $('beginButton').disabled=true;
     stages.results.classList.remove('stamp-revealed');
     stage('intro');

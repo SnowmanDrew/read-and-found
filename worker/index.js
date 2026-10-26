@@ -506,46 +506,48 @@ async function handleCovers(request) {
         return n === author || n.endsWith(' '+author) || author.endsWith(' '+n);
       })
     ).slice(0,2);
+    let metadataFallback = null;
     for (const work of works) {
-      let unlabelled = null;
-      // Old code inspected just the first page, even for heavily translated works.
+      let unlabelled = null, metadataEdition = null;
+      const year = Number.isInteger(work.first_publish_year) ? work.first_publish_year : null;
+      const metadata = (edition, id = null) => ({
+        coverUrl: id ? 'https://covers.openlibrary.org/b/id/'+id+'-L.jpg?default=false' : null,
+        isbn13: (edition?.isbn_13 || []).find(validISBN13) || null,
+        year,
+        pages: Number.isInteger(edition?.number_of_pages) && edition.number_of_pages > 0 ? edition.number_of_pages : null,
+        series: Array.isArray(edition?.series) ? String(edition.series[0] || '').slice(0,100) : null,
+        openLibraryUrl:'https://openlibrary.org'+work.key
+      });
       for (let offset=0;offset<=100;offset+=100) {
         const data = await catalogue('https://openlibrary.org'+work.key+'/editions.json?'+
           new URLSearchParams({limit:'100',offset:String(offset)}));
-        const editions = (data.entries || []).filter(item => !!coverId(item));
+        const entries = data.entries || [];
+        // Page count and publication year are valuable even if no edition has cover art.
+        const plausible = entries.filter(item => english(item) || unlabelledEnglishTitle(item,book));
+        const better = plausible.find(item => Number.isInteger(item.number_of_pages) && item.number_of_pages > 0) || plausible[0];
+        if (better && (!metadataEdition || (!metadataEdition.number_of_pages && better.number_of_pages)))
+          metadataEdition = better;
+        const editions = entries.filter(item => !!coverId(item));
         const confirmed = editions.filter(english);
         const fallback = editions.filter(item => unlabelledEnglishTitle(item,book));
-        const picked = confirmed.find(item => (item.isbn_13 || []).some(validISBN13)) ||
-          confirmed[0];
+        const picked = confirmed.find(item => (item.isbn_13 || []).some(validISBN13)) || confirmed[0];
         if (picked) {
-          const id=coverId(picked);
-          return {
-            coverUrl:'https://covers.openlibrary.org/b/id/'+id+'-L.jpg?default=false',
-            isbn13:(picked.isbn_13 || []).find(validISBN13) || null,
-            year: Number.isInteger(work.first_publish_year) ? work.first_publish_year : null,
-            pages: Number.isInteger(picked.number_of_pages) ? picked.number_of_pages : null,
-            series: Array.isArray(picked.series) ? String(picked.series[0]||'').slice(0,100) : null,
-            openLibraryUrl:'https://openlibrary.org'+work.key
-          };
+          const result = metadata(picked,coverId(picked));
+          if (!result.pages && metadataEdition) result.pages = metadata(metadataEdition).pages;
+          return result;
         }
         if (!unlabelled && fallback.length) unlabelled =
           fallback.find(item => (item.isbn_13 || []).some(validISBN13)) || fallback[0];
         if ((data.size || 0) <= offset+100) break;
       }
-      // Some original English editions omit the languages field entirely.
-      // An exact original-language title is safer than an unrelated work cover.
       if (unlabelled) {
-        return {
-          coverUrl:'https://covers.openlibrary.org/b/id/'+coverId(unlabelled)+'-L.jpg?default=false',
-          isbn13:(unlabelled.isbn_13 || []).find(validISBN13) || null,
-          year: Number.isInteger(work.first_publish_year) ? work.first_publish_year : null,
-          pages: Number.isInteger(unlabelled.number_of_pages) ? unlabelled.number_of_pages : null,
-          series: Array.isArray(unlabelled.series) ? String(unlabelled.series[0]||'').slice(0,100) : null,
-          openLibraryUrl:'https://openlibrary.org'+work.key
-        };
+        const result = metadata(unlabelled,coverId(unlabelled));
+        if (!result.pages && metadataEdition) result.pages = metadata(metadataEdition).pages;
+        return result;
       }
+      if (!metadataFallback) metadataFallback = metadata(metadataEdition);
     }
-    return null;
+    return metadataFallback;
   }
   try {
     const covers = Array(books.length).fill(null);

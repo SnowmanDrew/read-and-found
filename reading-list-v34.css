@@ -22,3 +22,48 @@
 .privacy-details{margin:2px 0 16px;font:14px/1.5 var(--book-font);color:var(--secondary)}
 .privacy-details summary{cursor:pointer;width:max-content;text-decoration:underline;text-underline-offset:3px}
 .privacy-details p{margin:9px 0 0;font:14px/1.5 var(--book-font)}
+
+
+/* v35: quieter book cards, little paper-sticker recommendations, and a visible reading trail. */
+.book-media{display:flex;flex-direction:column;align-items:flex-start;gap:9px;min-width:0}
+.book-media .book-cover{flex:none}
+.book-media .book-detail{margin:3px 0 0;max-width:132px;font:500 12px/1.45 var(--ui-font);color:#64738a;overflow-wrap:anywhere}
+.book-media .book-meta-source{display:inline-block;font:italic 12px/1.4 var(--book-font);color:#566d83;text-underline-offset:3px}
+.book-actions{display:flex;align-items:center;flex-wrap:wrap;gap:9px 12px;margin-top:23px;padding-top:14px;border-top:1px solid #c9d4de}
+.book-actions .book-buy{margin:0;padding:8px 11px;background:#1c304c;color:#fff;border:1px solid #1c304c;text-decoration:none;font:600 13px/1.25 var(--ui-font);display:inline-flex;align-items:center;gap:5px}
+.book-actions .book-buy:hover{background:#354f72;color:#fff}
+.book-actions .book-buy .lucide{width:14px;height:14px}
+.book-actions .borrow-panel,.book-actions .book-content-note,.book-actions .book-feedback{margin:0}
+.book-actions .borrow-panel summary,.book-actions .book-content-note summary,.book-actions .read-trigger{font:500 13px/1.3 var(--ui-font);color:#445a73;text-decoration:none;border:1px solid #bdc9d5;background:#f2f4f6;display:inline-flex;align-items:center;padding:8px 10px;min-height:36px;cursor:pointer;white-space:nowrap}
+.book-actions .borrow-panel summary:hover,.book-actions .book-content-note summary:hover,.book-actions .read-trigger:hover{background:#e5ebf1;color:#1c304c}
+.book-actions .book-content-note summary{color:#84513d;background:#f8ede3;border-color:#dec4b1}
+.book-actions .borrow-panel[open],.book-actions .book-content-note[open],.book-actions .book-feedback.is-open{flex-basis:100%}
+.book-actions .borrow-panel[open] summary,.book-actions .book-content-note[open] summary{margin-bottom:7px}
+.book-actions .borrow-panel-content,.book-actions .book-content-note p{max-width:630px}
+.book-actions .read-choices{margin:10px 0 0;max-width:520px}
+.book-match-badge{--sticker:#f3dfa4;--edge:#be8d36;--tilt:-3deg;display:inline-flex;align-items:center;gap:6px;margin:6px 0 18px;padding:7px 11px;background:var(--sticker);color:#253c55;border:1.5px solid var(--edge);box-shadow:2px 3px 0 #1c304c20;transform:rotate(var(--tilt));font:700 12px/1.15 var(--ui-font);letter-spacing:.012em;position:relative;white-space:nowrap;max-width:max-content}
+.book-match-badge .lucide{width:14px;height:14px;stroke-width:2}
+.book-match-badge::after{content:"";position:absolute;top:-5px;left:44%;width:25px;height:8px;background:#fffbdfb5;border:1px solid #e4dcc4a0;transform:rotate(8deg)}
+.sticker-tone_match{--sticker:#d8e9e8;--edge:#6d9e9e;--tilt:2deg}
+.sticker-wildcard{--sticker:#e8d9ee;--edge:#a887b1;--tilt:-4deg}
+.sticker-fresh_pick{--sticker:#f6d6c4;--edge:#c67a58;--tilt:3deg}
+.already-read-trail{border-top:2px solid #1c304c;padding:22px 0 10px;margin:18px 0 28px}
+.already-read-trail[hidden]{display:none!important}
+.read-trail-heading{display:flex;gap:10px 20px;align-items:baseline;flex-wrap:wrap;margin-bottom:13px;color:#1c304c}
+.read-trail-heading span{font:600 25px/1.15 var(--font-serif);letter-spacing:-.03em}
+.read-trail-heading small{font:italic 14px var(--book-font);color:#72849a}
+.already-read-trail ul{display:flex;flex-wrap:wrap;gap:9px;list-style:none;padding:0;margin:0}
+.already-read-trail li{background:#ebf0f2;border:1px solid #c1cdd6;padding:9px 12px;font:14px/1.4 var(--book-font)}
+.read-trail-title{font-weight:600}
+.read-trail-author{color:#63738b}
+.read-trail-rating{display:inline-block;margin-left:11px;padding:2px 7px;background:#d6e6d7;color:#315c40;font:600 12px var(--ui-font);text-transform:lowercase}
+.rating-disliked{background:#f1d9d3;color:#88493a}.rating-okay{background:#e6e5d5;color:#635b3e}
+@media(max-width:650px){
+ .book-media .book-detail,.book-media .book-meta-source{max-width:96px;font-size:10px;line-height:1.4}
+ .book-actions{gap:7px;margin-top:16px}
+ .book-actions .book-buy,.book-actions .borrow-panel summary,.book-actions .book-content-note summary,.book-actions .read-trigger{font-size:12px;padding:7px 8px;min-height:34px;white-space:normal}
+ .book-match-badge{font-size:11px;padding:5px 8px;margin:7px 0 14px}
+ .book-match-badge .lucide{width:12px;height:12px}
+}
+@media(max-width:390px){.book-media .book-detail,.book-media .book-meta-source{max-width:81px}}
+@media(prefers-reduced-motion:reduce){.book-match-badge{transition:none}}
