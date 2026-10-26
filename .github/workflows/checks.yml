@@ -33,3 +33,12 @@ jobs:
           node --check lib/share-proof.js
           node --check refinements-v26.js
 
+      - name: Public sharing routes
+        run: |
+          code=$(curl -L -sS --max-time 25 -o /tmp/readfound-og.png -w '%{http_code}' https://readandfound.com/api/site-og)
+          test "$code" = "200"
+          file /tmp/readfound-og.png | grep -q "PNG image"
+          code=$(curl -L -sS --max-time 25 -o /dev/null -w '%{http_code}' https://readandfound.com/list/abcdefghijkl)
+          test "$code" = "404"
+          code=$(curl -L -sS --max-time 25 -o /dev/null -w '%{http_code}' 'https://readandfound.com/api/list-og?id=abcdefghijkl')
+          test "$code" = "404"
