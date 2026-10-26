@@ -1,4 +1,5 @@
 import { track, openAIUsage, reserveQuota, releaseQuota, finishQuota, stats } from './metrics.js';
+import { issueShareProof } from '../lib/share-proof.js';
 // Read & Found's tiny same-origin backend. Static assets are injected by scripts/build.mjs.
 // OPENAI_API_KEY is a protected Sites runtime secret, never included in this file.
 
@@ -337,7 +338,7 @@ Write the portrait and five book selections as structured JSON.`;
     .filter(name => name.length > 3 && wordsSaid.includes(normaliseBook(name)))
     .filter((name,i,all)=>all.findIndex(other=>normaliseBook(other)===normaliseBook(name))===i)
     .slice(0,8);
-  return { readerType, portrait, favouriteBooks, favouriteAuthors, books, researchSources: bibliography.slice(0,12) };
+  return { readerType, portrait, favouriteBooks, favouriteAuthors, books, researchSources: bibliography.slice(0,12), shareProof: issueShareProof({readerType,portrait,books},data.sessionId,env.OPENAI_API_KEY) };
 }
 
 async function handleApi(request, env) {

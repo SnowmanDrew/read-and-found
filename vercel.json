@@ -6,6 +6,12 @@
     "api/covers.js": {"maxDuration": 60},
     "api/stats.js": {"maxDuration": 15},
     "api/event.js": {"maxDuration": 15},
-    "api/out.js": {"maxDuration": 15}
-  }
+    "api/out.js": {"maxDuration": 15},
+    "api/list.js": {"maxDuration": 15},
+    "api/list-page.js": {"maxDuration": 20},
+    "api/list-og.js": {"maxDuration": 30}
+  },
+  "rewrites": [
+    {"source": "/list/:id", "destination": "/api/list-page?id=:id"}
+  ]
 }
