@@ -76,4 +76,13 @@ class RegressionTests(unittest.TestCase):
         self.assertIn("'list_helpful'",worker)
         self.assertIn("'list_not_helpful'",worker)
 
+    def test_ruled_handwritten_answers(self):
+        sheet=(ROOT/'editorial-v30.css').read_text()
+        self.assertIn('Patrick+Hand',html)
+        self.assertIn('editorial-v30.css?v=31',html)
+        self.assertIn("--answer-line-height: 32px",sheet)
+        self.assertIn("--answer-line-height: 30px",sheet)
+        self.assertIn("background-attachment: local",sheet)
+        self.assertIn("font-family: 'Patrick Hand'",sheet)
+
 if __name__=='__main__': unittest.main()

@@ -114,3 +114,36 @@
 .endnote-actions .primary-button,.endnote-actions .outline-button{min-width:0;flex:1 1 45%;font-size:14px;padding:11px 12px;justify-content:center}
 .endnote-support{padding-top:17px}.results-feedback{font-size:14px}.research-sources summary{font-size:14px}
 }
+
+/* v31: answers are written on the ruling, not floating between lines.
+   Handwritten type stays here only; the rest of the interface remains bookish. */
+.answer-form textarea {
+  --answer-line-height: 32px;
+  font-family: 'Patrick Hand', 'Source Serif 4', Georgia, serif !important;
+  font-size: 23px !important;
+  font-weight: 400 !important;
+  line-height: var(--answer-line-height) !important;
+  letter-spacing: .005em;
+  padding: 10px 17px 12px !important;
+  min-height: 130px;
+  background-image: linear-gradient(to bottom, transparent calc(100% - 1px), rgba(41, 66, 97, .24) 0) !important;
+  background-size: 100% var(--answer-line-height) !important;
+  background-position: 0 4px !important;
+  background-repeat: repeat !important;
+  background-attachment: local !important;
+}
+.answer-form textarea::placeholder {
+  font-family: 'Patrick Hand', 'Source Serif 4', Georgia, serif !important;
+  font-style: normal !important;
+  opacity: .65;
+}
+@media (max-width: 600px) {
+  .answer-form textarea {
+    --answer-line-height: 30px;
+    font-size: 21px !important;
+    padding: 9px 15px 10px !important;
+    height: 124px;
+    min-height: 124px;
+    background-position: 0 3px !important;
+  }
+}
