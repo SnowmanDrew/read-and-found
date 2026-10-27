@@ -31,7 +31,7 @@
   <link rel="manifest" href="/site.webmanifest">
   <link rel="stylesheet" href="styles.css?v=26">
   <script src="lucide.min.js" defer></script>
-  <script src="app.js?v=37" defer></script>
+  <script src="app.js?v=38" defer></script>
 <link rel="stylesheet" href="refinements-v26.css?v=28">
 <link rel="stylesheet" href="bookshop-v28.css?v=29">
 <link rel="stylesheet" href="editorial-v30.css?v=31">
@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="polish-v33.css?v=33">
 <link rel="stylesheet" href="reading-list-v34.css?v=35">
 <link rel="stylesheet" href="shelf-loader-v36.css?v=36">
+<link rel="stylesheet" href="quota-v38.css?v=38">
 <script src="refinements-v26.js?v=26" defer></script>
 <script src="bookshop-v28.js?v=28" defer></script>
 </head>
@@ -87,6 +88,7 @@
             <div class="form-promise">Just a couple of minutes</div>
             <button id="beginButton" class="primary-button" type="submit" disabled><span>Find me some books</span></button>
           </div>
+          <p class="quota-note" id="quotaNotice" role="status" aria-live="polite" hidden></p>
         </form>
       </section>
 
@@ -158,6 +160,7 @@
           <button class="primary-button" type="button" id="sharePortrait"><span>Share my portrait</span><i data-lucide="share-2" aria-hidden="true"></i></button>
         </div>
         <div class="recommendations-heading"><span>Five books to try</span><span class="heading-rule"></span><span>01 — 05</span></div>
+        <p class="swap-quota-note" id="swapQuotaNotice" role="status" hidden></p>
         <div class="books-list" id="booksList"></div>
         <section class="already-read-trail" id="alreadyReadTrail" hidden aria-label="Books you have already read">
           <div class="read-trail-heading"><span>already on your shelves</span><small>your ratings help shape the next picks</small></div>

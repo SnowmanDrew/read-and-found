@@ -90,14 +90,51 @@ async function anonymousId(request, env) {
   return Array.from(sig.slice(0, 16), x => x.toString(16).padStart(2, '0')).join('');
 }
 
-// Optional enforcement. Charge a slot only on the final recommendation request.
-// Atomic Redis Lua prevents concurrent requests from exceeding the daily quota.
-const RESERVE = `if redis.call('EXISTS', KEYS[2]) == 1 then return {0, -1} end
-if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then return {1, redis.call('SCARD', KEYS[1])} end
-local n = redis.call('SCARD', KEYS[1])
+// Completed sessions and in-progress reservations are separate. A crashed
+// function cannot strand a reader's slot for three days: pending reservations
+// expire after ten minutes. Successful lists alone consume the daily allowance.
+// These Lua operations are atomic, so two tabs cannot claim the last slot.
+const RESERVE = `redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', tonumber(ARGV[3]) - 600000)
+local finished = redis.call('SCARD', KEYS[1])
+if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then return {0, finished} end
+if redis.call('ZSCORE', KEYS[2], ARGV[1]) then return {1, finished + redis.call('ZCARD', KEYS[2])} end
+local n = finished + redis.call('ZCARD', KEYS[2])
 if n >= tonumber(ARGV[2]) then return {0, n} end
-redis.call('SADD', KEYS[1], ARGV[1]); redis.call('EXPIRE', KEYS[1], 259200)
+redis.call('ZADD', KEYS[2], ARGV[3], ARGV[1]); redis.call('EXPIRE', KEYS[2], 259200)
 return {1, n + 1}`;
+const FINISH = `if redis.call('ZREM', KEYS[2], ARGV[1]) == 1 then
+  redis.call('SADD', KEYS[1], ARGV[1]); redis.call('EXPIRE', KEYS[1], 259200)
+end
+return 1`;
+const quotaKeys = (type, date, hash) => ({
+  completed: `rnf:quota:completed:${type}:${date}:${hash}`,
+  pending: `rnf:quota:pending:${type}:${date}:${hash}`
+});
+const quotaLimit = (env,type) => type === 'recommendations' ? 2 : Math.max(1, Math.min(100, Number(env.DAILY_REPLACEMENT_LIMIT || 10)));
+const tomorrowUTC = date => new Date(Date.parse(`${date}T00:00:00.000Z`) + 86400000).toISOString();
+
+export async function quotaStatus(request, env) {
+  const date = day();
+  const status = { enabled: env.RATE_LIMIT_ENABLED === 'true', limit: 2,
+    remaining: null, swapsRemaining: null, swapLimit: quotaLimit(env,'replacements'), resetAt: tomorrowUTC(date) };
+  if (!status.enabled) return status;
+  if (!redisConfigured(env)) return { ...status, unavailable: true };
+  try {
+    const hash = await anonymousId(request,env);
+    const lists = quotaKeys('recommendations',date,hash);
+    const swaps = quotaKeys('replacements',date,hash);
+    const result = await redis(env, [
+      ['SCARD',lists.completed], ['ZCOUNT',lists.pending,Date.now()-600000,'+inf'],
+      ['SCARD',swaps.completed], ['ZCOUNT',swaps.pending,Date.now()-600000,'+inf']
+    ]);
+    const counts = result.map(item=>Number(item?.result || 0));
+    return { ...status, used: counts[0], remaining: Math.max(0,2-counts[0]-counts[1]),
+      swapsRemaining: Math.max(0,status.swapLimit-counts[2]-counts[3]) };
+  } catch (err) {
+    console.warn('Read & Found quota status unavailable:',err.message);
+    return { ...status, unavailable: true };
+  }
+}
 
 export async function reserveQuota(request, env, sessionId, type = 'recommendations') {
   if (env.RATE_LIMIT_ENABLED !== 'true') return { allowed: true, enforced: false };
@@ -106,14 +143,13 @@ export async function reserveQuota(request, env, sessionId, type = 'recommendati
   let hash;
   try { hash = await anonymousId(request, env); }
   catch (_) { return { allowed: false, unavailable: true }; }
-  const limit = type === 'recommendations' ? 2 : Math.max(1, Math.min(100, Number(env.DAILY_REPLACEMENT_LIMIT || 10)));
+  const limit = quotaLimit(env,type);
   const date = day();
-  const key = `rnf:quota:${type}:${date}:${hash}`;
-  const done = `rnf:done:${type}:${date}:${hash}:${sessionId}`;
+  const { completed, pending } = quotaKeys(type,date,hash);
   try {
-    const result = await redis(env, ['EVAL', RESERVE, 2, key, done, sessionId, limit]);
+    const result = await redis(env, ['EVAL', RESERVE, 2, completed, pending, sessionId, limit, Date.now()]);
     const [allowed, count] = result.result || [];
-    return { allowed: allowed === 1, count, enforced: true, key, done, sessionId };
+    return { allowed: allowed === 1, count, enforced: true, completed, pending, sessionId };
   } catch (err) {
     console.warn('Read & Found quota unavailable:', err.message);
     return { allowed: false, unavailable: true };
@@ -121,12 +157,13 @@ export async function reserveQuota(request, env, sessionId, type = 'recommendati
 }
 
 export async function releaseQuota(env, quota) {
-  if (!quota?.enforced || !quota.key) return;
-  try { await redis(env, ['SREM', quota.key, quota.sessionId]); } catch (_) {}
+  if (!quota?.enforced || !quota.pending) return;
+  try { await redis(env, ['ZREM', quota.pending, quota.sessionId]); } catch (_) {}
 }
 export async function finishQuota(env, quota) {
-  if (!quota?.enforced || !quota.done) return;
-  try { await redis(env, ['SET', quota.done, '1', 'EX', 259200]); } catch (_) {}
+  if (!quota?.enforced || !quota.completed) return;
+  try { await redis(env, ['EVAL', FINISH, 2, quota.completed, quota.pending, quota.sessionId]); }
+  catch (err) { console.warn('Read & Found quota completion failed:',err.message); }
 }
 
 const asObject = value => {
