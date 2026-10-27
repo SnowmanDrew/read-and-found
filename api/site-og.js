@@ -9,12 +9,11 @@ const h = React.createElement;
 let fontPromise;
 function loadFonts() {
   if (!fontPromise) fontPromise = Promise.all([
-    '../assets/fonts/fraunces-700-social.ttf',
-    '../assets/fonts/fraunces-400-social.ttf'
-  ].map(async path => {
-    const bytes = await readFile(new URL(path, import.meta.url));
-    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-  })).catch(error => {
+    readFile(new URL('../assets/fonts/fraunces-700-social.ttf', import.meta.url)),
+    readFile(new URL('../assets/fonts/fraunces-400-social.ttf', import.meta.url))
+  ]).then(files => files.map(bytes =>
+    bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength)
+  )).catch(error => {
     console.warn('OG font unavailable:', error?.message || 'unknown');
     fontPromise = null;
     return null;
@@ -48,7 +47,7 @@ export default async function handler(req, res) {
       h('div', { style: {
         height: 475, display: 'flex', flexDirection: 'column',
         justifyContent: 'space-between', margin: '17px 32px 0',
-        padding: '58px 64px 75px', backgroundColor: '#1c304c',
+        padding: '45px 64px 145px', backgroundColor: '#1c304c',
         color: '#f7f9f5', borderBottom: '12px solid #e4b857'
       } },
         h('div', { style: {
@@ -64,8 +63,7 @@ export default async function handler(req, res) {
           fontFamily: headlineFont, fontSize: 28, lineHeight: 1.16,
           color: '#e5ecf3'
         } },
-          h('span', {}, 'tell us what you loved reading.'),
-          h('span', {}, 'we’ll find five books worth trying.')
+          h('span', {}, 'tell us what you loved reading.')
         )
       ),
       h('div', { style: {
@@ -104,6 +102,7 @@ export default async function handler(req, res) {
       ...(fontData ? { fonts: [{ name: 'Fraunces', data: fontData[0], weight: 700, style: 'normal' },
         { name: 'Fraunces', data: fontData[1], weight: 400, style: 'normal' }] } : {})
     });
+    res.setHeader('X-RNF-OG-Font', fontData ? 'embedded' : 'fallback');
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
     return res.status(200).end(Buffer.from(await image.arrayBuffer()));
