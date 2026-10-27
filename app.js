@@ -838,11 +838,25 @@
       if(books.length>6)draw(`+ ${books.length-6} more books`,110,1339,sans(16,600),muted);
     } else if(authors.length){
       draw('AUTHORS YOU MENTIONED',110,1092,sans(17,700),muted);
-      authors.slice(0,8).forEach((author,i)=>{
-        const col=Math.floor(i/4),row=i%4,x=110+col*444,y=1140+row*49;
-        rule(x,y-20,7,coral,25);
-        draw(shortText(author,405,serif(30,600)),x+24,y,serif(30,600));
-      });
+      if(authors.length<=4){
+        // A couple of favourite writers deserve the space of little bookplates,
+        // rather than two tiny names above an otherwise empty rectangle.
+        const rows=Math.ceil(authors.length/2),cardH=rows===1?112:83,gap=14;
+        const top=1140+(207-(rows*cardH+(rows-1)*gap))/2;
+        authors.forEach((author,i)=>{
+          const col=i%2,row=Math.floor(i/2),x=110+col*446,y=top+row*(cardH+gap);
+          ctx.fillStyle='#faf8f1';ctx.fillRect(x,y,423,cardH);
+          rule(x,y,6,coral,cardH);
+          draw(String(i+1).padStart(2,'0'),x+24,y+29,sans(17,700),muted);
+          draw(shortText(author,368,serif(32,600)),x+24,y+cardH-27,serif(32,600));
+        });
+      } else {
+        authors.slice(0,8).forEach((author,i)=>{
+          const col=Math.floor(i/4),row=i%4,x=110+col*444,y=1140+row*49;
+          rule(x,y-20,7,coral,25);
+          draw(shortText(author,405,serif(30,600)),x+24,y,serif(30,600));
+        });
+      }
     } else {
       draw('YOU STARTED WITH',110,1095,sans(17,700),muted);
       const quote=state.favourites||'Some books, some questions, and a conversation.';
