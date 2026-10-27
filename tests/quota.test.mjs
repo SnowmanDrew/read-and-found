@@ -52,6 +52,26 @@ test('remaining lists, swaps, and UTC reset come from durable counters',async()=
   }finally{globalThis.fetch=original;}
 });
 
+test('Vercel Marketplace KV aliases work for Redis storage',async()=>{
+  const original=globalThis.fetch;
+  let url,token;
+  try{
+    globalThis.fetch=async(endpoint,options)=>{
+      url=endpoint;token=options.headers.Authorization;
+      return new Response(JSON.stringify([{result:0},{result:0},{result:0},{result:0}]),{status:200});
+    };
+    const status=await quotaStatus(request,{
+      RATE_LIMIT_ENABLED:'true',OPENAI_API_KEY:'test-signing-secret',
+      KV_REST_API_URL:'https://redis-vercel.example.test/',
+      KV_REST_API_TOKEN:'test-vercel-kv-token'
+    });
+    assert.equal(status.unavailable,undefined);
+    assert.equal(status.remaining,2);
+    assert.equal(url,'https://redis-vercel.example.test/pipeline');
+    assert.equal(token,'Bearer test-vercel-kv-token');
+  }finally{globalThis.fetch=original;}
+});
+
 test('a final request reserves a pending slot, then completes or releases it',async()=>{
   const original=globalThis.fetch;
   const calls=[];

@@ -11,16 +11,20 @@ const PRICES = {
   'gpt-6-astra': [10.00, 1.00, 50.00]
 };
 const day = () => new Date().toISOString().slice(0, 10);
-const redisConfigured = env => Boolean(env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN);
+// Vercel's Redis Marketplace may provision either the UPSTASH_* names or the
+// legacy KV_REST_API_* aliases. Both point to the same Upstash REST service.
+const redisUrl = env => env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
+const redisToken = env => env.UPSTASH_REDIS_REST_TOKEN || env.KV_REST_API_TOKEN;
+const redisConfigured = env => Boolean(redisUrl(env) && redisToken(env));
 
 async function redis(env, commands) {
   if (!redisConfigured(env)) throw new Error('metrics_store_missing');
-  const base = env.UPSTASH_REDIS_REST_URL.replace(/\/$/, '');
+  const base = redisUrl(env).replace(/\/$/, '');
   if (!/^https:\/\//.test(base)) throw new Error('invalid_metrics_store');
   const pipeline = Array.isArray(commands[0]);
   const response = await fetch(base + (pipeline ? '/pipeline' : ''), {
     method: 'POST',
-    headers: { Authorization: `Bearer ${env.UPSTASH_REDIS_REST_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${redisToken(env)}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(commands), signal: AbortSignal.timeout(8000)
   });
   if (!response.ok) throw new Error('metrics_store_unavailable');
