@@ -1,31 +1,31 @@
 import React from 'react';
 import { ImageResponse } from '@vercel/og';
+import { readFile } from 'node:fs/promises';
 
 const h = React.createElement;
-const FONT_URL = 'https://raw.githubusercontent.com/google/fonts/main/ofl/fraunces/Fraunces%5BSOFT%2CWONK%2Copsz%2Cwght%5D.ttf';
-let fontPromise;
 
-// The preview borrows the site's bookshop-front hero, oversized Fraunces
-// lettering and overlapping paper answer slip rather than a generic banner.
-// Cache the open-licensed font across warm invocations; still render if it fails.
-function loadFont() {
-  if (!fontPromise) fontPromise = fetch(FONT_URL, { signal: AbortSignal.timeout(8000) })
-    .then(response => {
-      if (!response.ok) throw new Error('font unavailable');
-      return response.arrayBuffer();
-    })
-    .catch(error => {
-      console.warn('OG font unavailable:', error?.message || 'unknown');
-      fontPromise = null;
-      return null;
-    });
+// These two small subsets are from Fraunces, licensed under SIL OFL 1.1.
+// Bundling them avoids an external font request for every social-card render.
+let fontPromise;
+function loadFonts() {
+  if (!fontPromise) fontPromise = Promise.all([
+    '../assets/fonts/fraunces-700-social.ttf',
+    '../assets/fonts/fraunces-400-social.ttf'
+  ].map(async path => {
+    const bytes = await readFile(new URL(path, import.meta.url));
+    return bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+  })).catch(error => {
+    console.warn('OG font unavailable:', error?.message || 'unknown');
+    fontPromise = null;
+    return null;
+  });
   return fontPromise;
 }
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end('Method not allowed');
   try {
-    const fontData = await loadFont();
+    const fontData = await loadFonts();
     const headlineFont = fontData ? 'Fraunces' : 'Georgia';
     const card = h('div', { style: {
       width: 1200, height: 630, display: 'flex', flexDirection: 'column',
@@ -101,7 +101,8 @@ export default async function handler(req, res) {
     );
     const image = new ImageResponse(card, {
       width: 1200, height: 630,
-      ...(fontData ? { fonts: [{ name: 'Fraunces', data: fontData, weight: 700, style: 'normal' }] } : {})
+      ...(fontData ? { fonts: [{ name: 'Fraunces', data: fontData[0], weight: 700, style: 'normal' },
+        { name: 'Fraunces', data: fontData[1], weight: 400, style: 'normal' }] } : {})
     });
     res.setHeader('Content-Type', 'image/png');
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
