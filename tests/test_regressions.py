@@ -111,7 +111,7 @@ class RegressionTests(unittest.TestCase):
     def test_signature_animation_and_selective_lowercase(self):
         stamp=(ROOT/'signature-v32.css').read_text()
         self.assertIn('signature-v32.css?v=32',html)
-        self.assertIn('app.js?v=36',html)
+        self.assertIn('app.js?v=37',html)
         self.assertIn('class="reading-stamp"',html)
         self.assertIn('bookshop-stamp',stamp)
         self.assertIn('prefers-reduced-motion:reduce',stamp)

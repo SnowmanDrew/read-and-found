@@ -719,65 +719,152 @@
   }
 
   async function portraitCanvas() {
+    // The screen portrait already has both sets of reader mentions. Include
+    // them in the downloadable image even when no individual books were named.
+    const books=(state.favouriteBooks||[]).filter(book=>book?.title);
+    const authors=(state.favouriteAuthors||[]).filter(Boolean);
+    // Canvas uses the same editorial typefaces as the site. Font-loading can
+    // be delayed on mobile; waiting prevents a first-share fallback typeface.
+    if(document.fonts?.load){
+      await Promise.race([
+        Promise.allSettled([
+          document.fonts.load('700 92px Fraunces'),
+          document.fonts.load('400 36px Fraunces'),
+          document.fonts.load('600 22px "IBM Plex Sans"')
+        ]),
+        new Promise(resolve=>setTimeout(resolve,2200))
+      ]);
+    }
     const canvas=document.createElement('canvas'); canvas.width=1080; canvas.height=1440;
     const ctx=canvas.getContext('2d');
-    const draw=(text,x,y,font,color)=>{ctx.font=font;ctx.fillStyle=color;ctx.fillText(text,x,y);};
-    ctx.fillStyle='#f3e1a0'; ctx.fillRect(0,0,1080,1440);
-    ctx.fillStyle='#1b304e';ctx.fillRect(88,77,8,49);
-    draw('read',90,119,'500 44px Georgia','#1b304e');
-    const readWidth=ctx.measureText('read').width;
-    draw('&',90+readWidth+12,119,'italic 44px Georgia','#da553f');
-    const andWidth=ctx.measureText('&').width;
-    draw('found',90+readWidth+andWidth+29,119,'500 44px Georgia','#1b304e');
-    draw('NOTES ON YOUR READING',90,191,'700 18px Arial','#455775');
-    ctx.fillStyle='rgba(27,48,78,.32)';ctx.fillRect(90,221,900,2);
-    draw('SOMETHING ABOUT YOUR READING',90,295,'700 17px Arial','#455775');
-    ctx.font='400 94px Georgia';
-    const headingLines=wrappedLines(ctx,state.readerType,890).slice(0,3);
-    let y=397;
-    for(const line of headingLines){draw(line,90,y,'400 94px Georgia','#1b304e');y+=97;}
-    ctx.fillStyle='#da553f';ctx.fillRect(90,y+1,64,5);
-    y+=80;
-    ctx.font='36px Georgia';
-    const portraitLines=wrappedLines(ctx,state.portrait,888);
-    let fontSize=36, lineHeight=51;
-    const shelfStart=state.favouriteBooks.length ? 1020 : 1200;
-    while(y + portraitLines.length*lineHeight > shelfStart - 65 && fontSize>25){
-      fontSize -= 2; lineHeight -= 3;
-      ctx.font=`${fontSize}px Georgia`;
-      portraitLines.splice(0,portraitLines.length,...wrappedLines(ctx,state.portrait,888));
+    const navy='#1c304c', coral='#c34b36', muted='#52617a', paper='#f6f4ec';
+    const serif=(size,weight=400)=>`${weight} ${size}px Fraunces, Georgia, serif`;
+    const sans=(size,weight=500)=>`${weight} ${size}px "IBM Plex Sans", Arial, sans-serif`;
+    const draw=(text,x,y,font,color=navy)=>{
+      ctx.font=font; ctx.fillStyle=color; ctx.fillText(String(text||''),x,y);
+    };
+    const rule=(x,y,width,color=navy,height=2)=>{
+      ctx.fillStyle=color; ctx.fillRect(x,y,width,height);
+    };
+    const shortText=(value,width,font)=>{
+      const str=String(value||'').trim(); ctx.font=font;
+      if(ctx.measureText(str).width<=width)return str;
+      let cut=str;
+      while(cut.length && ctx.measureText(cut+'…').width>width)cut=cut.slice(0,-1);
+      return cut.trimEnd()+'…';
+    };
+    const limitedLines=(value,width,font,maxLines)=>{
+      ctx.font=font;
+      const lines=wrappedLines(ctx,value,width);
+      if(lines.length>maxLines){
+        lines.length=maxLines;
+        lines[maxLines-1]=shortText(lines[maxLines-1]+'…',width,font);
+      }
+      return lines;
+    };
+    ctx.fillStyle=paper; ctx.fillRect(0,0,1080,1440);
+    rule(0,0,1080,navy,12);
+    // Masthead mirrors the real site's cream header and serif wordmark.
+    draw('read',80,111,serif(53,700));
+    ctx.font=serif(53,700); const wordWidth=ctx.measureText('read').width;
+    draw('&',80+wordWidth+3,111,serif(53,700),coral);
+    ctx.font=serif(53,700); const ampWidth=ctx.measureText('&').width;
+    draw('found',83+wordWidth+ampWidth,111,serif(53,700));
+    draw('a little book-finding project',704,101,serif(22,400),muted);
+    rule(80,148,920,'#9aa9ba',2);
+
+    draw('A NOTE ON YOUR TASTE',82,213,sans(21,700),muted);
+    let titleSize=92, titleLines=[];
+    do {
+      ctx.font=serif(titleSize,700);
+      titleLines=wrappedLines(ctx,state.readerType||'Your reading portrait',915);
+      if(titleLines.length<=2)break;
+      titleSize-=4;
+    } while(titleSize>60);
+    titleLines=limitedLines(state.readerType||'Your reading portrait',915,serif(titleSize,700),2);
+    let titleY=309;
+    titleLines.forEach(line=>{draw(line,80,titleY,serif(titleSize,700)); titleY+=titleSize*1.04;});
+    rule(82,titleY-28,78,coral,6);
+
+    const paragraphY=Math.max(469,titleY+33);
+    const paragraphBottom=965;
+    let bodySize=35, bodyLines=[];
+    while(bodySize>=24){
+      bodyLines=limitedLines(state.portrait,913,serif(bodySize),100);
+      if(bodyLines.length*(bodySize*1.39)<=paragraphBottom-paragraphY)break;
+      bodySize-=2;
     }
-    for(const line of portraitLines){draw(line,90,y,`${fontSize}px Georgia`,'#1b304e');y+=lineHeight;}
-    if(state.favouriteBooks.length){
-      const books=state.favouriteBooks.slice(0,5);
-      draw('THE BOOKS THAT STARTED IT ALL',90,1012,'700 17px Arial','#455775');
-      const images=await Promise.all(books.map(b=>loadShareCover(b.coverUrl)));
-      const coverWidth=156,coverHeight=224,gap=22,top=1055;
-      books.forEach((book,i)=>{
-        const x=90+i*(coverWidth+gap);
-        const fills=['#c2a78b','#c7cdab','#d5bf97','#b6c8c0','#dfb7ab'];
-        ctx.fillStyle=fills[i];ctx.fillRect(x,top,coverWidth,coverHeight);
-        const img=images[i];
-        if(img){
-          const scale=Math.max(coverWidth/img.width,coverHeight/img.height);
-          const w=img.width*scale,h=img.height*scale;
-          ctx.save();ctx.beginPath();ctx.rect(x,top,coverWidth,coverHeight);ctx.clip();ctx.drawImage(img,x+(coverWidth-w)/2,top+(coverHeight-h)/2,w,h);ctx.restore();
-        } else {
-          ctx.fillStyle='rgba(40,68,56,.15)';ctx.fillRect(x,top,9,coverHeight);
-          ctx.font='400 24px Georgia'; ctx.fillStyle='#284438';
-          let ly=top+35;
-          for(const line of wrappedLines(ctx,book.title,coverWidth-28).slice(0,5)) {ctx.fillText(line,x+17,ly);ly+=28;}
-          ctx.font='15px Arial';
-          for(const line of wrappedLines(ctx,book.author,coverWidth-25).slice(0,3)) {ctx.fillText(line,x+17,top+coverHeight-25);}
-        }
-        ctx.font='17px Arial';ctx.fillStyle='#1b304e';
-        const short=wrappedLines(ctx,book.title,coverWidth-3).slice(0,2);
-        short.forEach((line,j)=>ctx.fillText(line,x,top+coverHeight+32+j*23));
+    const bodyLineHeight=bodySize*1.39;
+    bodyLines=limitedLines(state.portrait,913,serif(bodySize),Math.max(1,Math.floor((paragraphBottom-paragraphY)/bodyLineHeight)));
+    bodyLines.forEach((line,i)=>draw(line,82,paragraphY+i*bodyLineHeight,serif(bodySize)));
+
+    // The lower shelf always has something personal to share. Both author-only
+    // and book-only answers get dedicated layouts instead of a blank area.
+    const shelfY=1000, shelfBottom=1353;
+    ctx.fillStyle='#e8eef3';ctx.fillRect(80,shelfY,920,shelfBottom-shelfY);
+    rule(80,shelfY,920,navy,3);
+    draw('WHERE OUR CONVERSATION STARTED',108,1043,sans(19,700),muted);
+    const fills=['#d9b77e','#c2d1bb','#d1b1a7','#b9c9d5','#d9c79c','#b3cbbf'];
+    const coverImages=await Promise.all(books.slice(0,6).map(book=>loadShareCover(book.coverUrl)));
+    const bookEntry=(book,img,x,y,width,index)=>{
+      const coverW=41,coverH=56;
+      ctx.fillStyle=fills[index%fills.length];ctx.fillRect(x,y-38,coverW,coverH);
+      rule(x+6,y-38,3,'rgba(28,48,76,.20)',coverH);
+      if(img){
+        const scale=Math.max(coverW/img.width,coverH/img.height),w=img.width*scale,h=img.height*scale;
+        ctx.save();ctx.beginPath();ctx.rect(x,y-38,coverW,coverH);ctx.clip();
+        ctx.drawImage(img,x+(coverW-w)/2,y-38+(coverH-h)/2,w,h);ctx.restore();
+      }
+      draw(shortText(book.title,width-coverW-19,serif(23,700)),x+coverW+15,y-9,serif(23,700));
+      if(book.author)draw(shortText(book.author,width-coverW-19,sans(16)),x+coverW+15,y+15,sans(16),muted);
+    };
+    if(books.length&&authors.length){
+      draw('BOOKS YOU MENTIONED',110,1092,sans(17,700),muted);
+      draw('AUTHORS YOU MENTIONED',600,1092,sans(17,700),muted);
+      rule(566,1070,2,'#c4d0db',257);
+      books.slice(0,4).forEach((book,i)=>bookEntry(book,coverImages[i],110,1142+i*57,425,i));
+      authors.slice(0,6).forEach((author,i)=>{
+        rule(599,1124+i*36,8,coral,8);
+        draw(shortText(author,353,serif(25)),624,1135+i*36,serif(25));
       });
+      if(books.length>4)draw(`+ ${books.length-4} more book${books.length>5?'s':''}`,110,1340,sans(16,600),muted);
+      if(authors.length>6)draw(`+ ${authors.length-6} more`,600,1340,sans(16,600),muted);
+    } else if(books.length){
+      draw('BOOKS YOU MENTIONED',110,1092,sans(17,700),muted);
+      books.slice(0,6).forEach((book,i)=>{
+        const col=i%2,row=Math.floor(i/2);
+        bookEntry(book,coverImages[i],110+col*451,1145+row*75,415,i);
+      });
+      if(books.length>6)draw(`+ ${books.length-6} more books`,110,1339,sans(16,600),muted);
+    } else if(authors.length){
+      draw('AUTHORS YOU MENTIONED',110,1092,sans(17,700),muted);
+      if(authors.length<=4){
+        // A couple of favourite writers deserve the space of little bookplates,
+        // rather than two tiny names above an otherwise empty rectangle.
+        const rows=Math.ceil(authors.length/2),cardH=rows===1?112:83,gap=14;
+        const top=1140+(207-(rows*cardH+(rows-1)*gap))/2;
+        authors.forEach((author,i)=>{
+          const col=i%2,row=Math.floor(i/2),x=110+col*446,y=top+row*(cardH+gap);
+          ctx.fillStyle='#faf8f1';ctx.fillRect(x,y,423,cardH);
+          rule(x,y,6,coral,cardH);
+          draw(String(i+1).padStart(2,'0'),x+24,y+29,sans(17,700),muted);
+          draw(shortText(author,368,serif(32,600)),x+24,y+cardH-27,serif(32,600));
+        });
+      } else {
+        authors.slice(0,8).forEach((author,i)=>{
+          const col=Math.floor(i/4),row=i%4,x=110+col*444,y=1140+row*49;
+          rule(x,y-20,7,coral,25);
+          draw(shortText(author,405,serif(30,600)),x+24,y,serif(30,600));
+        });
+      }
+    } else {
+      draw('YOU STARTED WITH',110,1095,sans(17,700),muted);
+      const quote=state.favourites||'Some books, some questions, and a conversation.';
+      limitedLines(quote,847,serif(30),5).forEach((line,i)=>draw(line,110,1155+i*41,serif(30)));
     }
-    ctx.fillStyle='rgba(27,48,78,.32)';ctx.fillRect(90,1364,900,2);
-    draw('DRAWN FROM A CONVERSATION ABOUT BOOKS',90,1400,'700 14px Arial','#455775');
-    draw('READ & FOUND',845,1400,'700 15px Arial','#1b304e');
+    rule(80,1380,920,'#9aa9ba',2);
+    draw('THREE QUESTIONS. FIVE BOOKS, PICKED FOR YOU.',80,1415,sans(17,600),muted);
+    draw('readandfound.com',807,1415,serif(22,700),navy);
     return canvas;
   }
 
