@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reading portrait preview — temporary</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body{background:#26334a;margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font-family:Arial,sans-serif}
+    canvas{max-width:min(560px,94vw);height:auto;box-shadow:0 20px 60px #0008}
+    a{color:white}
+    .error{color:white}
+  </style>
+</head>
+<body>
+  <script type="module">
+    const source=await (await fetch('/app.js')).text();
+    const start=source.indexOf('  async function portraitCanvas() {');
+    const end=source.indexOf('\n  async function exportPortrait(',start);
+    const scenario=new URLSearchParams(location.search).get('case')||'authors';
+    const base={
+      readerType:'Lives in Company',
+      portrait:'You like a crowded novel when the relationships keep moving: people growing up, changing one another, and becoming different versions of themselves over time. Allende and Ferrante both offer that sustained involvement, though on different geographical scales. Place brings a separate pleasure for you: the chance to experience other countries and periods in your imagination, with characters who make them feel inhabited.',
+      favourites:'I love Isabel Allende and Elena Ferrante.',
+      favouriteBooks:[],favouriteAuthors:['Isabel Allende','Elena Ferrante']
+    };
+    if(scenario==='both'){
+      base.favouriteBooks=[{title:'The House of the Spirits',author:'Isabel Allende'},{title:'My Brilliant Friend',author:'Elena Ferrante'}];
+    }
+    if(scenario==='long'){
+      base.readerType='A Fascination With People Becoming Different People';
+      base.portrait=('These are the kinds of stories that help you see people grow into themselves, change their minds, and rediscover their world through relationships. ').repeat(7);
+      base.favouriteBooks=[{title:'The House of the Spirits',author:'Isabel Allende'}];
+      base.favouriteAuthors=['Isabel Allende','Elena Ferrante','Ursula K. Le Guin','David Foster Wallace','Octavia E. Butler'];
+    }
+    const wrappedLines=(ctx,txt,width)=>{
+      const lines=[];let line='';
+      for(const word of String(txt||'').split(/\s+/).filter(Boolean)){
+        const next=line?line+' '+word:word;
+        if(line&&ctx.measureText(next).width>width){lines.push(line);line=word;}
+        else line=next;
+      }
+      if(line)lines.push(line);
+      return lines;
+    };
+    const create=new Function('state','wrappedLines','loadShareCover',`return (${source.slice(start,end).trim()})`);
+    try{
+      const canvas=await create(base,wrappedLines,async()=>null)();
+      document.body.append(canvas);
+    }catch(error){document.body.append(Object.assign(document.createElement('pre'),{className:'error',textContent:error.stack}));}
+  </script>
+</body>
+</html>
