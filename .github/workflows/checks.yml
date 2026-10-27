@@ -22,6 +22,8 @@ jobs:
         run: node tests/share-proof.test.mjs
       - name: Reading portrait image layouts
         run: node tests/portrait-canvas.test.mjs
+      - name: Daily quota behaviour
+        run: node tests/quota.test.mjs
       - name: JavaScript syntax
         run: |
           node --check app.js

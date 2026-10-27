@@ -19,7 +19,7 @@ async function readRequestBody(req) {
 }
 
 export async function handle(req, res, route) {
-  const isGet = ['out', 'stats'].includes(route);
+  const isGet = ['out', 'stats', 'quota'].includes(route);
   if (req.method !== (isGet ? 'GET' : 'POST')) {
     res.statusCode = 405;
     res.setHeader('Allow', isGet ? 'GET' : 'POST');

@@ -1,4 +1,4 @@
-import { track, openAIUsage, reserveQuota, releaseQuota, finishQuota, stats } from './metrics.js';
+import { track, openAIUsage, reserveQuota, releaseQuota, finishQuota, quotaStatus, stats } from './metrics.js';
 import { issueShareProof } from '../lib/share-proof.js';
 // Read & Found's tiny same-origin backend. Static assets are injected by scripts/build.mjs.
 // OPENAI_API_KEY is a protected Sites runtime secret, never included in this file.
@@ -349,12 +349,20 @@ async function handleApi(request, env) {
   let data;
   try { data = validateBody(await request.json()); } catch (_) { return error('Please check your answers and try again.', 400); }
   if (!data) return error('Please check your answers and try again.', 400);
+  // Check before generating *any* paid question, not just at the end of the
+  // conversation. Readers should never answer three questions and only then
+  // discover that they have used their two lists for the day.
+  if (data.step < 3 && env.RATE_LIMIT_ENABLED === 'true') {
+    const allowance = await quotaStatus(request, env);
+    if (allowance.unavailable) return error('We can’t check today’s reading allowance just now. Please try again shortly.',503);
+    if (allowance.remaining === 0) return error('You’ve had your two reading lists for today. More will be ready after midnight UTC.',429);
+  }
   let quota = null;
   if (data.step === 3) {
     quota = await reserveQuota(request, env, data.sessionId);
     if (!quota.allowed) return quota.unavailable
       ? error('The reading room is temporarily at capacity. Please try again later.',503)
-      : error('You have already received two sets of recommendations today. Come back tomorrow for more.',429);
+      : error('You’ve had your two reading lists for today. More will be ready after midnight UTC.',429);
   }
   await track(env, `stage_${data.step}_started`);
   try {
@@ -574,6 +582,10 @@ async function handleCovers(request) {
 export default {
   async fetch(request, env) {
     const path = new URL(request.url).pathname;
+    if (path === '/api/quota') {
+      if (request.method !== 'GET') return error('Method not allowed.',405);
+      return json(await quotaStatus(request,env));
+    }
     if (path === '/api/read') return handleApi(request, env);
     if (path === '/api/replace') return handleReplace(request, env);
     if (path === '/api/covers') return handleCovers(request);

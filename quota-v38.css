@@ -1,0 +1,25 @@
+.quota-note {
+  margin: 0;
+  padding: 0 32px 22px;
+  background: #eff3f7;
+  color: #4d6279;
+  font: 500 13px/1.45 var(--ui-font, Arial, sans-serif);
+  letter-spacing: .005em;
+}
+.quota-note::before {
+  content: '✳';
+  display: inline-block;
+  margin-right: 9px;
+  color: #c34b36;
+  font-size: 15px;
+}
+.quota-note.is-exhausted { color: #913d31; }
+.swap-quota-note {
+  margin: -9px 0 24px;
+  font: 500 13px/1.5 var(--ui-font, Arial, sans-serif);
+  color: #53647b;
+}
+@media (max-width: 700px) {
+  .quota-note { padding: 0 14px 17px; font-size: 12px; }
+  .swap-quota-note { margin: 0 0 17px; font-size: 12px; }
+}

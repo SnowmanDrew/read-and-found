@@ -5,7 +5,7 @@
   'use strict';
 
   const $ = id => document.getElementById(id);
-  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', shareProof: '', sharedListUrl: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], readTrail: [], sessionId: '', stage: 'intro', busy: false };
+  const state = { favourites: '', questions: [], answers: [], researchNotes: '', initialSources: [], researchSources: [], books: [], readerType: '', portrait: '', shareProof: '', sharedListUrl: '', favouriteBooks: [], favouriteAuthors: [], feedback: [], readTrail: [], sessionId: '', stage: 'intro', busy: false, quota: null };
   const stages = { intro: $('introStage'), conversation: $('conversationStage'), results: $('resultsStage') };
   let loadingTicker = null;
   let retryAction = null;
@@ -30,6 +30,50 @@
   const trim = value => String(value || '').trim();
   const sessionId = () => (window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`);
   const snippet = (value, max = 70) => trim(value).length > max ? trim(value).slice(0,max-1).trimEnd() + '…' : trim(value);
+
+  const quotaBlocked = () => state.quota?.enabled && (state.quota.unavailable || state.quota.remaining === 0);
+  const resetLabel = value => {
+    const date = new Date(value);
+    if (!Number.isFinite(date.getTime())) return 'midnight UTC';
+    return new Intl.DateTimeFormat('en-GB',{ hour:'numeric',minute:'2-digit',timeZone:'Europe/London' }).format(date) + ' UK time';
+  };
+  function updateBeginAvailability() {
+    $('beginButton').disabled = trim($('favourites').value).length < 3 || quotaBlocked();
+  }
+  function renderQuota() {
+    const notice = $('quotaNotice'), swaps = $('swapQuotaNotice'), quota = state.quota;
+    notice.hidden = !quota?.enabled;
+    swaps.hidden = !quota?.enabled || state.stage !== 'results';
+    notice.classList.toggle('is-exhausted',Boolean(quotaBlocked()));
+    if (quota?.enabled) {
+      if (quota.unavailable) notice.textContent = 'Our daily allowance counter is temporarily unavailable. Please try again shortly.';
+      else if (quota.remaining === 0) notice.textContent = `That’s your two reading lists for today. More will be ready at ${resetLabel(quota.resetAt)}. Your saved links still work.`;
+      else notice.textContent = `${quota.remaining} of ${quota.limit} reading lists left today. Only a finished list uses one, and book swaps are separate.`;
+      if (!swaps.hidden) swaps.textContent = quota.unavailable ? '' :
+        `${quota.swapsRemaining} of ${quota.swapLimit} book swaps left today. Swaps don’t use another reading list.`;
+      if (state.stage === 'results' && !quota.unavailable) {
+        document.querySelectorAll('.read-trigger').forEach(button => {
+          button.disabled = quota.swapsRemaining === 0;
+          button.title = quota.swapsRemaining === 0 ? `More swaps will be ready at ${resetLabel(quota.resetAt)}.` : '';
+        });
+      }
+    }
+    updateBeginAvailability();
+  }
+  async function refreshQuota() {
+    try {
+      const response = await fetch('/api/quota',{ cache:'no-store' });
+      if (!response.ok) throw new Error('quota_unavailable');
+      const quota = await response.json();
+      if (typeof quota.enabled !== 'boolean') throw new Error('quota_invalid');
+      state.quota = quota;
+    } catch (_) {
+      // The final request remains protected by the server even if this small
+      // informational request fails. Do not erase an earlier known allowance.
+      if (state.quota?.enabled) state.quota = { ...state.quota, unavailable:true };
+    }
+    renderQuota();
+  }
 
   function icons() { if (window.lucide?.createIcons) window.lucide.createIcons({ attrs: { 'stroke-width': 1.6 } }); }
 
@@ -92,8 +136,9 @@
     $('loadingTitle').textContent = 'A small interruption.';
     $('loadingDetail').textContent = message;
     $('loadingIcon').hidden = true;
-    $('retryButton').hidden = /two sets of recommendations today|book swaps available today/i.test(message);
+    $('retryButton').hidden = /two reading lists for today|book swaps available today/i.test(message);
     $('backFromError').hidden = false;
+    if (/today|allowance/i.test(message)) void refreshQuota();
   }
 
   async function callModel(step, history) {
@@ -515,18 +560,23 @@
       status.append(icon,label);
     } else {
       const note = document.createElement('span'); note.textContent = message;
-      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'swap-retry'; retry.textContent = 'Try again';
-      retry.addEventListener('click', () => {
-        if (retryJob.epoch !== recommendationEpoch || state.stage !== 'results') return;
-        swapQueue.push(retryJob); showSwapStatus(index,'Finding another book…'); void processSwapQueue();
-      });
-      status.append(note,retry);
+      status.append(note);
+      if (!/book swaps available today/i.test(message)) {
+        const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'swap-retry'; retry.textContent = 'Try again';
+        retry.addEventListener('click', () => {
+          if (retryJob.epoch !== recommendationEpoch || state.stage !== 'results') return;
+          swapQueue.push(retryJob); showSwapStatus(index,'Finding another book…'); void processSwapQueue();
+        });
+        status.append(retry);
+      }
     }
     feedback.append(status); icons();
   }
 
   function markAsRead(index,book,rating) {
     if (state.stage !== 'results' || state.books[index] !== book) return;
+    if (state.quota?.enabled && state.quota.swapsRemaining === 0)
+      return toast(`More book swaps will be ready at ${resetLabel(state.quota.resetAt)}.`);
     const entry = { title: book.title, author: book.author, rating };
     state.feedback.push(entry);
     const job = { index, book, rating, epoch: recommendationEpoch, requestId: sessionId() };
@@ -597,9 +647,11 @@
           icons();
           $('swapAnnouncement').textContent = `${job.book.title} replaced with ${book.title} by ${book.author}.`;
           void lookupCovers([book],job.index,coverLookupVersion);
+          void refreshQuota();
         } catch (err) {
           if (job.epoch !== recommendationEpoch || state.stage !== 'results') continue;
           showSwapStatus(job.index,err.message || 'Couldn’t find a replacement.',job);
+          if (/book swaps available today/i.test(err.message)) void refreshQuota();
         }
       }
     } finally { swapWorkerRunning = false; }
@@ -608,6 +660,10 @@
   async function begin() {
     const favourites = trim($('favourites').value);
     if (favourites.length < 3) return;
+    await refreshQuota();
+    if (quotaBlocked()) return toast(state.quota.unavailable
+      ? 'We can’t check today’s allowance. Please try again shortly.'
+      : `That’s your two lists for today. More will be ready at ${resetLabel(state.quota.resetAt)}.`);
     state.favourites = favourites; state.sessionId=sessionId(); state.answers = []; state.questions = []; state.researchNotes = ''; state.initialSources = []; state.researchSources = [];
     await run(async () => {
       const result = await callModel(0,[]);
@@ -636,6 +692,7 @@
         state.favouriteAuthors = Array.isArray(result.favouriteAuthors) ? result.favouriteAuthors.slice(0,8) : [];
         state.researchSources = Array.isArray(result.researchSources) ? result.researchSources : [];
         renderResults();
+        void refreshQuota();
       }
     },next === 3 ? 'Putting your reading list together…' : 'Another question for you…',next === 3 ? 'Checking for books you might have missed.' : 'A minute with the bookshelves.');
   }
@@ -648,6 +705,7 @@
     $('favourites').value=''; $('characterCount').textContent='0'; $('beginButton').disabled=true;
     stages.results.classList.remove('stamp-revealed');
     stage('intro');
+    void refreshQuota();
   }
 
   async function saveOrCopyList() {
@@ -896,7 +954,7 @@
 
   $('favourites').addEventListener('input',e => {
     $('characterCount').textContent = e.target.value.length;
-    $('beginButton').disabled = trim(e.target.value).length < 3;
+    updateBeginAvailability();
   });
   $('useExample').addEventListener('click',() => {
     $('favourites').value = 'I loved The Hunger Games and Normal People. I always enjoy Agatha Christie, and I like stories with a bit of mystery and complicated characters.';
@@ -932,4 +990,5 @@
   $('settingsClose').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('click',e=>{if(e.target===dialog) dialog.close();});
   icons();
+  void refreshQuota();
 })();

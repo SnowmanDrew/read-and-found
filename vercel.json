@@ -13,6 +13,9 @@
     "api/stats.js": {
       "maxDuration": 15
     },
+    "api/quota.js": {
+      "maxDuration": 15
+    },
     "api/event.js": {
       "maxDuration": 15
     },
